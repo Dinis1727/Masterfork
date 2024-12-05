@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../assets/Masterfork.png';
+import logo from '../assets/Masterfork_slogan.png';
 
 const Header = () => {
   return (
