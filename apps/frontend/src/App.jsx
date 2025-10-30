@@ -5,6 +5,7 @@ import Footer from './components/Footer.jsx';
 import Home from './pages/Home.jsx';
 import Catalogo from './pages/Catalogo.jsx';
 import Encomendas from './pages/Encomendas.jsx';
+import Formacoes from './pages/Formacoes.jsx';
 import './App.css';
 
 const App = () => {
@@ -17,6 +18,7 @@ const App = () => {
             <Route path="/" element={<Home />} />
             <Route path="/catalogo" element={<Catalogo />} />
             <Route path="/encomendas" element={<Encomendas />} />
+            <Route path="/formacoes" element={<Formacoes />} />
           </Routes>
         </main>
         <Footer />
