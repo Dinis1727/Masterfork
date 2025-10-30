@@ -1,0 +1,17 @@
+{
+  "name": "masterfork-backend",
+  "version": "0.1.0",
+  "description": "API backend for Masterfork platform",
+  "main": "src/server.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test",
+    "lint": "eslint .",
+    "format": "prettier --check \"**/*.{js,json}\"",
+    "format:write": "prettier --write \"**/*.{js,json}\""
+  },
+  "devDependencies": {
+    "supertest": "^6.3.4"
+  }
+}
