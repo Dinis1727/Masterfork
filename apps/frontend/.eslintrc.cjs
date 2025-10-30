@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ['react-app', 'react-app/jest'],
+  extends: ['../../packages/config/eslint-config.js', 'react-app', 'react-app/jest'],
   parserOptions: {
     ecmaVersion: 2022,
     sourceType: 'module',

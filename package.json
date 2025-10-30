@@ -1,0 +1,19 @@
+{
+  "name": "masterfork",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm -ws --if-present run build",
+    "lint": "npm -ws --if-present run lint",
+    "test": "npm -ws --if-present run test",
+    "dev:frontend": "npm --prefix apps/frontend start",
+    "dev:backend": "npm --prefix apps/backend start",
+    "dev:server": "npm --prefix apps/server run dev"
+  },
+  "devDependencies": {
+    "@masterfork/config": "workspace:*"
+  }
+}

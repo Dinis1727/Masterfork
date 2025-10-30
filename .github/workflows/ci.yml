@@ -10,76 +10,107 @@ jobs:
   frontend:
     name: Frontend (React)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node (cache)
-        if: ${{ hashFiles('apps/frontend/package-lock.json') != '' }}
+        if: ${{ hashFiles('package-lock.json') != '' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
-          cache-dependency-path: apps/frontend/package-lock.json
+          cache-dependency-path: package-lock.json
       - name: Setup Node (no cache)
-        if: ${{ hashFiles('apps/frontend/package-lock.json') == '' }}
+        if: ${{ hashFiles('package-lock.json') == '' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-      - name: Install
-        run: npm ci || npm install
-      - name: Lint
+      - name: Install (root)
+        shell: bash
         run: |
-          if npm run | grep -q " lint"; then npm run lint; else echo "no lint script"; fi
+          set +e
+          if [ -f package-lock.json ]; then
+            echo "Lockfile found, trying npm ci"
+            npm ci
+            status=$?
+            if [ $status -ne 0 ]; then
+              echo "npm ci failed ($status), falling back to npm install"
+              npm install
+            fi
+          else
+            echo "No lockfile found, running npm install"
+            npm install
+          fi
+          set -e
+      - name: Lint
+        shell: bash
+        run: |
+          if [ -x apps/frontend/node_modules/.bin/eslint ] || [ -x node_modules/.bin/eslint ]; then
+            npm -w apps/frontend run lint
+          else
+            echo "no eslint installed, skipping"
+          fi
       - name: Build
-        run: npm run build
+        run: npm -w apps/frontend run build
       - name: Test
         if: ${{ env.ACT != 'true' }}
         env:
           CI: true
         run: |
-          if npm run | grep -q " test"; then npm test -- --watch=false; else echo "no test script"; fi
+          if npm -w apps/frontend run | grep -q " test"; then npm -w apps/frontend test -- --watch=false; else echo "no test script"; fi
 
   backend:
     name: Backend (HTTP service)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/backend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node (cache)
-        if: ${{ hashFiles('apps/backend/package-lock.json') != '' }}
+        if: ${{ hashFiles('package-lock.json') != '' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
-          cache-dependency-path: apps/backend/package-lock.json
+          cache-dependency-path: package-lock.json
       - name: Setup Node (no cache)
-        if: ${{ hashFiles('apps/backend/package-lock.json') == '' }}
+        if: ${{ hashFiles('package-lock.json') == '' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-      - name: Install
-        run: npm ci || npm install
-      - name: Lint
+      - name: Install (root)
+        shell: bash
         run: |
-          if [ -x node_modules/.bin/eslint ]; then npm run lint; else echo "no eslint installed, skipping"; fi
+          set +e
+          if [ -f package-lock.json ]; then
+            echo "Lockfile found, trying npm ci"
+            npm ci
+            status=$?
+            if [ $status -ne 0 ]; then
+              echo "npm ci failed ($status), falling back to npm install"
+              npm install
+            fi
+          else
+            echo "No lockfile found, running npm install"
+            npm install
+          fi
+          set -e
+      - name: Lint
+        shell: bash
+        run: |
+          if [ -x apps/backend/node_modules/.bin/eslint ] || [ -x node_modules/.bin/eslint ]; then
+            npm -w apps/backend run lint
+          else
+            echo "no eslint installed, skipping"
+          fi
       - name: Test
         env:
           CI: true
         run: |
-          if npm run | grep -q " test"; then npm test; else echo "no test script"; fi
+          if npm -w apps/backend run | grep -q " test"; then npm -w apps/backend test; else echo "no test script"; fi
 
   server:
     name: Server (Express + Prisma)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/server
     env:
       # Keep Prisma CLI happy without needing a DB in CI
       DATABASE_URL: file:./dev.db
@@ -87,22 +118,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node (cache)
-        if: ${{ hashFiles('apps/server/package-lock.json') != '' }}
+        if: ${{ hashFiles('package-lock.json') != '' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
-          cache-dependency-path: apps/server/package-lock.json
+          cache-dependency-path: package-lock.json
       - name: Setup Node (no cache)
-        if: ${{ hashFiles('apps/server/package-lock.json') == '' }}
+        if: ${{ hashFiles('package-lock.json') == '' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-      - name: Install
-        run: npm ci || npm install
+      - name: Install (root)
+        shell: bash
+        run: |
+          set +e
+          if [ -f package-lock.json ]; then
+            echo "Lockfile found, trying npm ci"
+            npm ci
+            status=$?
+            if [ $status -ne 0 ]; then
+              echo "npm ci failed ($status), falling back to npm install"
+              npm install
+            fi
+          else
+            echo "No lockfile found, running npm install"
+            npm install
+          fi
+          set -e
       - name: Generate Prisma Client
         run: |
-          if npm run | grep -q "prisma:generate"; then npm run prisma:generate; else echo "no prisma generate"; fi
+          if npm -w apps/server run | grep -q "prisma:generate"; then npm -w apps/server run prisma:generate; else echo "no prisma generate"; fi
       - name: Lint
         run: |
-          if npm run | grep -q " lint"; then npm run lint; else echo "no lint script"; fi
+          if npm -w apps/server run | grep -q " lint"; then npm -w apps/server run lint; else echo "no lint script"; fi

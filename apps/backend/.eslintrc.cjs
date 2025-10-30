@@ -3,7 +3,7 @@ module.exports = {
     node: true,
     es2022: true,
   },
-  extends: ['eslint:recommended'],
+  extends: ['../../packages/config/eslint-config.js'],
   parserOptions: {
     ecmaVersion: 2022,
     sourceType: 'script',
