@@ -9,7 +9,7 @@ import './App.css';
 
 const App = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="app-shell">
         <Header />
         <main className="content">

@@ -5,10 +5,12 @@ import Home from '../Home.jsx';
 describe('Home page', () => {
   it('renders highlight section content', () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Home />
       </MemoryRouter>
     );
-    expect(screen.getByText(/Experiência MasterFork/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Experiência MasterFork/i })
+    ).toBeInTheDocument();
   });
 });
