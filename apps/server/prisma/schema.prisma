@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model Product {
@@ -12,7 +13,7 @@ model Product {
   name        String
   sku         String    @unique
   description String?
-  price       Float
+  price       Decimal
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   orders      Order[]
@@ -25,7 +26,7 @@ model Order {
   productId  Int
   product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity   Int       @default(1)
-  totalPrice Float
+  totalPrice Decimal
   status     String    @default("pending")
   createdAt  DateTime  @default(now())
 
