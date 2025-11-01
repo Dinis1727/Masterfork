@@ -1,3 +1,4 @@
+"use client";
 import { useEffect } from 'react';
 
 export default function useRevealOnScroll() {
@@ -20,3 +21,4 @@ export default function useRevealOnScroll() {
     return () => observer.disconnect();
   }, []);
 }
+

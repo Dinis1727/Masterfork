@@ -1,13 +1,11 @@
-import React from 'react';
-
-const Formacoes = () => {
+export default function TrainingPage() {
   return (
     <div className="page">
       <header className="page__header">
         <h1>Formações MasterFork</h1>
         <p>
-          A MasterFork promove formações profissionais nas áreas de <strong>cozinha</strong>,{' '}
-          <strong>pastelaria</strong>, <strong>serviço de mesa</strong> e <strong>bar</strong>,
+          A MasterFork promove formações profissionais nas áreas de <strong>cozinha</strong>,
+          <strong> pastelaria</strong>, <strong>serviço de mesa</strong> e <strong>bar</strong>,
           destinadas a profissionais e entusiastas da restauração que procuram elevar as suas
           competências.
         </p>
@@ -68,6 +66,4 @@ const Formacoes = () => {
       </section>
     </div>
   );
-};
-
-export default Formacoes;
+}

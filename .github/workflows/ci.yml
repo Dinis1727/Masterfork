@@ -14,14 +14,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node (cache)
-        if: ${{ hashFiles('package-lock.json') != '' }}
+        if: ${{ hashFiles('package-lock.json') != '' && github.actor != 'nektos/act' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
           cache-dependency-path: package-lock.json
       - name: Setup Node (no cache)
-        if: ${{ hashFiles('package-lock.json') == '' }}
+        if: ${{ hashFiles('package-lock.json') == '' || github.actor == 'nektos/act' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
@@ -66,14 +66,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node (cache)
-        if: ${{ hashFiles('package-lock.json') != '' }}
+        if: ${{ hashFiles('package-lock.json') != '' && github.actor != 'nektos/act' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
           cache-dependency-path: package-lock.json
       - name: Setup Node (no cache)
-        if: ${{ hashFiles('package-lock.json') == '' }}
+        if: ${{ hashFiles('package-lock.json') == '' || github.actor == 'nektos/act' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
@@ -118,14 +118,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node (cache)
-        if: ${{ hashFiles('package-lock.json') != '' }}
+        if: ${{ hashFiles('package-lock.json') != '' && github.actor != 'nektos/act' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
           cache-dependency-path: package-lock.json
       - name: Setup Node (no cache)
-        if: ${{ hashFiles('package-lock.json') == '' }}
+        if: ${{ hashFiles('package-lock.json') == '' || github.actor == 'nektos/act' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'

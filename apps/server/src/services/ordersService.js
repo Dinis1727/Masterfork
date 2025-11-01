@@ -1,68 +1,51 @@
 const db = require('../db');
 
-const validateOrder = (order) => {
+// Validação do formulário do frontend
+const validateOrder = (data) => {
   const errors = [];
 
-  if (!order || typeof order !== 'object') {
-    errors.push('Order payload must be an object.');
-    return errors;
+  if (!data.name || typeof data.name !== 'string') {
+    errors.push('O nome do responsável é obrigatório.');
   }
 
-  if (!order.customerId) {
-    errors.push('customerId is required.');
+  if (!data.business || typeof data.business !== 'string') {
+    errors.push('O nome do estabelecimento é obrigatório.');
   }
 
-  if (!order.customerName) {
-    errors.push('customerName is required.');
+  if (!data.email || !data.email.includes('@')) {
+    errors.push('O email profissional é inválido.');
   }
 
-  if (!Array.isArray(order.items) || order.items.length === 0) {
-    errors.push('items must be a non-empty array.');
-  } else {
-    order.items.forEach((item, index) => {
-      if (!item || typeof item !== 'object') {
-        errors.push(`items[${index}] must be an object.`);
-        return;
-      }
-
-      if (!item.productId) {
-        errors.push(`items[${index}].productId is required.`);
-      }
-
-      if (typeof item.quantity !== 'number' || item.quantity <= 0) {
-        errors.push(`items[${index}].quantity must be a positive number.`);
-      }
-    });
-  }
-
-  if (typeof order.totalAmount !== 'number' || Number.isNaN(order.totalAmount)) {
-    errors.push('totalAmount must be a valid number.');
+  if (!data.services) {
+    errors.push('O campo "Serviços de interesse" é obrigatório.');
   }
 
   return errors;
 };
 
-const createOrder = async ({ customerId, customerName, items, totalAmount, notes = null }) => {
-  const insertQuery = `
-    INSERT INTO orders (customer_id, customer_name, items, total_amount, notes)
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING id, customer_id, customer_name, items, total_amount, notes, created_at
-  `;
+// Criação no banco
+const createOrder = async (data) => {
+  // se ainda não criaste tabela, apenas loga:
+  console.log('📦 Nova encomenda recebida:');
+  console.log(data);
 
-  const values = [
-    customerId,
-    customerName,
-    JSON.stringify(items),
-    totalAmount,
-    notes,
-  ];
+  // (quando tiveres tabela "orders", podemos salvar assim)
+  // const insertQuery = `
+  //   INSERT INTO orders (name, business, email, services, message)
+  //   VALUES ($1, $2, $3, $4, $5)
+  //   RETURNING id, name, business, email, services, message, created_at
+  // `;
+  // const values = [data.name, data.business, data.email, data.services, data.message];
+  // const { rows } = await db.query(insertQuery, values);
+  // return rows[0];
 
-  const { rows } = await db.query(insertQuery, values);
-  return rows[0];
+  return { ...data, id: Date.now() }; // simula um registo
 };
 
-module.exports = {
-  validateOrder,
-  createOrder,
+// Listagem
+const listOrders = async () => {
+  // Se ainda não tiveres base de dados:
+  return [{ example: 'Este endpoint pode listar orders' }];
 };
 
+module.exports = { validateOrder, createOrder, listOrders };

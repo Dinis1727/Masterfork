@@ -1,62 +1,61 @@
-const { beforeEach, describe, it } = require('node:test');
+const { beforeEach, afterEach, describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
-const { createApp, getInitialOrders } = require('../src/app');
+const { createApp } = require('../src/app');
 
-describe('Orders routes', () => {
-  let app;
+describe('Orders routes (simple HTTP server)', () => {
+  let server;
 
   beforeEach(() => {
-    app = createApp(getInitialOrders());
+    server = createApp();
   });
 
-  it('returns the existing orders list', async () => {
-    const response = await request(app)
+  afterEach(() => {
+    if (server && server.close) server.close();
+  });
+
+  it('returns the orders list (initially empty)', async () => {
+    const response = await request(server)
       .get('/orders')
       .expect(200)
       .expect('content-type', /json/);
 
     assert.ok(Array.isArray(response.body.orders));
-    assert.equal(response.body.orders.length, getInitialOrders().length);
-    assert.equal(response.body.orders[0].customer, getInitialOrders()[0].customer);
+    assert.equal(response.body.orders.length, 0);
   });
 
   it('creates a new order when payload is valid', async () => {
     const payload = {
-      customer: 'Ana Martins',
-      items: [
-        { name: 'Caldo Verde', quantity: 1, price: 3.5 },
-        { name: 'Bacalhau à Brás', quantity: 2, price: 12 },
-      ],
-      notes: 'Entregar às 20h',
+      name: 'Ana Martins',
+      business: 'Restaurante do Mar',
+      email: 'ana@example.com',
+      services: 'menus',
+      message: 'Entregar às 20h',
     };
 
-    const creation = await request(app)
+    const creation = await request(server)
       .post('/orders')
       .send(payload)
       .expect(201)
       .expect('content-type', /json/);
 
-    assert.equal(creation.body.customer, 'Ana Martins');
-    assert.equal(creation.body.items.length, payload.items.length);
-    assert.ok(typeof creation.body.id === 'number');
-    assert.equal(creation.body.status, 'pending');
+    assert.equal(creation.body.success, true);
+    assert.ok(creation.body.order);
+    assert.equal(creation.body.order.name, payload.name);
+    assert.ok(typeof creation.body.order.id === 'number');
 
-    const list = await request(app).get('/orders').expect(200);
-    assert.equal(list.body.orders.length, getInitialOrders().length + 1);
-    assert.equal(
-      list.body.orders[list.body.orders.length - 1].customer,
-      'Ana Martins',
-    );
+    const list = await request(server).get('/orders').expect(200);
+    assert.equal(list.body.orders.length, 1);
+    assert.equal(list.body.orders[0].name, payload.name);
   });
 
   it('rejects invalid orders with 400 status', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .post('/orders')
-      .send({ customer: '', items: [] })
+      .send({ name: '', business: '', email: '', services: '' })
       .expect(400)
       .expect('content-type', /json/);
 
-    assert.match(response.body.error, /invalid order data/i);
+    assert.match(String(response.body.error || ''), /multa|falta|obrigat|invalid|missing/i);
   });
 });
