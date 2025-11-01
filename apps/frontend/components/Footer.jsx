@@ -4,18 +4,18 @@ export default function Footer() {
       <div className="footer__content">
         <p>© {new Date().getFullYear()} MasterFork. Todos os direitos reservados.</p>
         <p>
-          Rua da Gastronomia, 123 · Porto ·
-          <a href="tel:+351220000000" className="footer__link"> +351 220 000 000</a>
+          R. Família Colares Pinto 1695, 3880-163 Ovar
+          <a href="tel:+351963962074" className="footer__link"> +351 963 962 074</a>
         </p>
         <p>
           Siga-nos no Instagram
           <a
-            href="https://www.instagram.com/masterfork"
+            href="https://www.instagram.com/_masterfork_/"
             target="_blank"
             rel="noreferrer"
             className="footer__link"
           >
-            @masterfork
+            @_masterfork_
           </a>
         </p>
       </div>

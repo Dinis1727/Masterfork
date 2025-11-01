@@ -1,4 +1,4 @@
-const db = require('../db');
+const prisma = require('../prisma');
 
 // Validação do formulário do frontend
 const validateOrder = (data) => {
@@ -23,29 +23,24 @@ const validateOrder = (data) => {
   return errors;
 };
 
-// Criação no banco
+// Criação no banco via Prisma
 const createOrder = async (data) => {
-  // se ainda não criaste tabela, apenas loga:
-  console.log('📦 Nova encomenda recebida:');
-  console.log(data);
-
-  // (quando tiveres tabela "orders", podemos salvar assim)
-  // const insertQuery = `
-  //   INSERT INTO orders (name, business, email, services, message)
-  //   VALUES ($1, $2, $3, $4, $5)
-  //   RETURNING id, name, business, email, services, message, created_at
-  // `;
-  // const values = [data.name, data.business, data.email, data.services, data.message];
-  // const { rows } = await db.query(insertQuery, values);
-  // return rows[0];
-
-  return { ...data, id: Date.now() }; // simula um registo
+  const created = await prisma.order.create({
+    data: {
+      name: data.name.trim(),
+      business: data.business.trim(),
+      email: data.email.trim(),
+      services: String(data.services),
+      message: data.message || null,
+    },
+  });
+  return created;
 };
 
 // Listagem
 const listOrders = async () => {
-  // Se ainda não tiveres base de dados:
-  return [{ example: 'Este endpoint pode listar orders' }];
+  const list = await prisma.order.findMany({ orderBy: { createdAt: 'desc' } });
+  return list;
 };
 
 module.exports = { validateOrder, createOrder, listOrders };

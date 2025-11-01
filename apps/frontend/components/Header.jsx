@@ -20,16 +20,14 @@ export default function Header() {
   return (
     <header className="header">
       <div className="brand">
-        {/* Optimized brand image with next/image */}
-        <Image src="/Masterfork.png" width={56} height={56} alt="Logótipo MasterFork" className="brand__logo" />
-        <div className="brand__text">
-          <span className="brand__title">MasterFork</span>
-          <span className="brand__subtitle">Hotelaria &amp; Restauração</span>
-        </div>
+        {/* Logo links to home */}
+        <Link href="/" aria-label="Ir para a página inicial">
+          <Image src="/Masterfork-logotipo.png" width={56} height={56} alt="Logótipo MasterFork" className="brand__logo" />
+        </Link>
       </div>
       <nav className="nav">
         <NavLink href="/">Início</NavLink>
-        <NavLink href="/catalog">Catálogo</NavLink>
+        <NavLink href="/services">Nossos Serviços</NavLink>
         <NavLink href="/orders" cta>Fazer Encomenda</NavLink>
       </nav>
     </header>

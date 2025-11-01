@@ -8,7 +8,7 @@ export default function HeroSection() {
       <div className="hero__media">
         {/* Optimized hero image */}
         <Image
-          src="/Masterfork.png"
+          src="/masterfork-logo.png"
           alt="Logótipo MasterFork — Hotelaria e Restauração"
           className="hero__image"
           width={420}
@@ -26,7 +26,7 @@ export default function HeroSection() {
         </p>
 
         <div className="hero__actions">
-          <Link href="/catalog" className="btn-secondary">
+          <Link href="/services" className="btn-secondary">
             Contratar Serviço
           </Link>
         </div>

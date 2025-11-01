@@ -30,7 +30,12 @@ export default function OrdersPage() {
 
   const onSubmit = async (data) => {
     try {
-      await OrdersAPI.create(data);
+      const res = await OrdersAPI.create(data);
+      const ok = res && res.status >= 200 && res.status < 300 && (
+        (res.data && typeof res.data.message === 'string') ||
+        (res.data && res.data.success === true)
+      );
+      if (!ok) throw new Error('Resposta inválida do servidor');
       setSuccess(true);
       reset();
     } catch (error) {

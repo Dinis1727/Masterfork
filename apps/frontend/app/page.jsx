@@ -57,7 +57,7 @@ export default function Home() {
             alt="Garrafa de cerveja artesanal MasterBeer"
             className="masterbeer__image"
             width={540}
-            height={380}
+            height={360}
           />
         </div>
       </section>

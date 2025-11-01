@@ -1,10 +1,15 @@
 import axios from 'axios';
 
-const API_URL =
+export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : '');
 
 export const api = axios.create({ baseURL: API_URL });
+
+if (process.env.NODE_ENV === 'development') {
+  // eslint-disable-next-line no-console
+  console.info('[API] baseURL =', API_URL || '(relative to Next server)');
+}
 
 export const HealthAPI = {
   ping: () => api.get('/'),
@@ -15,5 +20,8 @@ export const OrdersAPI = {
   create: (payload) => api.post('/orders', payload),
 };
 
-export default api;
+export const TrainingAPI = {
+  create: (payload) => api.post('/training', payload),
+};
 
+export default api;
