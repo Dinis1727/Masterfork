@@ -27,7 +27,7 @@ export default function Home() {
             <p>
               <strong>Data:</strong> 15 de Dezembro de 2025 <br />
               <strong>Tema:</strong> Técnicas Avançadas de Cozinha Profissional <br />
-              <strong>Local:</strong> Escola de Hotelaria e Restauração do Porto <br />
+              <strong>Local:</strong> Masterfork <br />
             </p>
             <Link href="/training" className="btn-primary">
               Saber Mais / Inscrever-se

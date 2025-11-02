@@ -1,5 +1,6 @@
 "use client";
-import React from 'react';
+import React, { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +16,15 @@ const schema = z.object({
   message: z.string().max(2000).optional(),
 });
 
+function CartPrefill({ setValue }) {
+  const searchParams = useSearchParams();
+  React.useEffect(() => {
+    const cart = searchParams?.get('cart');
+    if (cart) setValue('message', `Itens do carrinho: ${cart}`);
+  }, [searchParams, setValue]);
+  return null;
+}
+
 export default function OrdersPage() {
   const [success, setSuccess] = React.useState(false);
 
@@ -23,18 +33,27 @@ export default function OrdersPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    setValue,
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', business: '', email: '', services: '', message: '' },
+    defaultValues: {
+      name: '',
+      business: '',
+      email: '',
+      services: '',
+      message: '',
+    },
   });
 
   const onSubmit = async (data) => {
     try {
       const res = await OrdersAPI.create(data);
-      const ok = res && res.status >= 200 && res.status < 300 && (
-        (res.data && typeof res.data.message === 'string') ||
-        (res.data && res.data.success === true)
-      );
+      const ok =
+        res &&
+        res.status >= 200 &&
+        res.status < 300 &&
+        ((res.data && typeof res.data.message === 'string') ||
+          (res.data && res.data.success === true));
       if (!ok) throw new Error('Resposta inválida do servidor');
       setSuccess(true);
       reset();
@@ -54,8 +73,14 @@ export default function OrdersPage() {
         para personalizar a solução MasterFork para o seu negócio.
       </p>
 
+      <Suspense fallback={null}>
+        <CartPrefill setValue={setValue} />
+      </Suspense>
+
       {success && (
-        <div className="success-message">Pedido enviado com sucesso! Entraremos em contacto brevemente.</div>
+        <div className="success-message">
+          Pedido enviado com sucesso! Entraremos em contacto brevemente.
+        </div>
       )}
 
       <form className="form" onSubmit={handleSubmit(onSubmit)}>
@@ -67,8 +92,15 @@ export default function OrdersPage() {
 
         <div className="form__row">
           <label>Nome do estabelecimento</label>
-          <input {...register('business')} name="business" type="text" aria-invalid={!!errors.business} />
-          {errors.business && <span style={{ color: '#b3261e' }}>{errors.business.message}</span>}
+          <input
+            {...register('business')}
+            name="business"
+            type="text"
+            aria-invalid={!!errors.business}
+          />
+          {errors.business && (
+            <span style={{ color: '#b3261e' }}>{errors.business.message}</span>
+          )}
         </div>
 
         <div className="form__row">
@@ -86,7 +118,9 @@ export default function OrdersPage() {
             <option value="formacao">Formação de equipas</option>
             <option value="consultoria">Consultoria operacional</option>
           </select>
-          {errors.services && <span style={{ color: '#b3261e' }}>{errors.services.message}</span>}
+          {errors.services && (
+            <span style={{ color: '#b3261e' }}>{errors.services.message}</span>
+          )}
         </div>
 
         <div className="form__row">
@@ -101,3 +135,4 @@ export default function OrdersPage() {
     </div>
   );
 }
+

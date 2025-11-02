@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -8,7 +8,7 @@ export default function HeroSection() {
       <div className="hero__media">
         {/* Optimized hero image */}
         <Image
-          src="/masterfork-logo.png"
+          src="/masterfork-logo-v2.png"
           alt="Logótipo MasterFork — Hotelaria e Restauração"
           className="hero__image"
           width={420}
@@ -18,11 +18,11 @@ export default function HeroSection() {
       </div>
 
       <div className="hero__content">
-        <h1>A receita certa para elevar o seu serviço</h1>
+        <h1>Junte-se a Nós!</h1>
         <p>
-          A MasterFork fornece soluções completas para hotelaria e restauração: do equipamento
-          profissional às cartas exclusivas e formação de equipas. Somos o parceiro que coloca o
-          sabor e a experiência no centro de cada detalhe.
+          A MasterFork reúne consultoria, formação de profissionais, renting de equipamentos e recrutamento.
+          Para além disso, a MasterBeer — para apoiar a hotelaria e a restauração do planeamento à execução diária, 
+          mantendo a experiência e o sabor no centro de cada detalhe.
         </p>
 
         <div className="hero__actions">
@@ -34,3 +34,4 @@ export default function HeroSection() {
     </section>
   );
 }
+

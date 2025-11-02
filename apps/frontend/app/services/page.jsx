@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 const services = [
   {
     id: 'consultoria',
@@ -58,9 +60,12 @@ export default function ServicesPage() {
             <div className="service-card__body">
               <h2>{title}</h2>
               <p className="service-card__intro">{intro}</p>
-              <a className="service-card__link" href={`#${id}`}>
+              <Link
+                className="service-card__link"
+                href={id === 'formacao' ? '/training' : `#${id}`}
+              >
                 Saber mais
-              </a>
+              </Link>
             </div>
           </article>
         ))}

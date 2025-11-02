@@ -22,12 +22,13 @@ export default function Header() {
       <div className="brand">
         {/* Logo links to home */}
         <Link href="/" aria-label="Ir para a página inicial">
-          <Image src="/Masterfork-logotipo.png" width={56} height={56} alt="Logótipo MasterFork" className="brand__logo" />
+          <Image src="/Masterfork-logotipo.png" width={120} height={120} alt="Logótipo MasterFork" className="brand__logo" />
         </Link>
       </div>
       <nav className="nav">
         <NavLink href="/">Início</NavLink>
         <NavLink href="/services">Nossos Serviços</NavLink>
+        <NavLink href="/shop">Loja</NavLink>
         <NavLink href="/orders" cta>Fazer Encomenda</NavLink>
       </nav>
     </header>
