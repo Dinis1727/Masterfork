@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useAuth } from './AuthProvider';
 
 const NavLink = ({ href, children, cta = false }) => {
   const pathname = usePathname();
@@ -18,6 +19,8 @@ const NavLink = ({ href, children, cta = false }) => {
 };
 
 export default function Header() {
+  const { user, loading } = useAuth();
+
   return (
     <header className="header">
       <div className="brand">
@@ -31,7 +34,11 @@ export default function Header() {
         <NavLink href="/services">Nossos Serviços</NavLink>
         <NavLink href="/shop">Loja</NavLink>
         <NavLink href="/contacts">Contactos</NavLink>
-        <NavLink href="/orders" cta>Fazer Encomenda</NavLink>
+        {!loading && user ? (
+          <NavLink href="/profile" cta>Perfil</NavLink>
+        ) : (
+          <NavLink href="/login" cta>Login</NavLink>
+        )}
       </nav>
     </header>
   );

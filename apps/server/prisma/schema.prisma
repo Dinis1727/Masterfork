@@ -27,6 +27,9 @@ model Order {
   email     String
   services  String
   message   String?
+  cartSummary String?
+  items     Json?
+  total     Decimal? @db.Decimal(10, 2)
   createdAt DateTime @default(now())
 
   @@index([email])

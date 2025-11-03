@@ -123,6 +123,7 @@ export default function ShopPage() {
   return (
     <div className="page shop-page">
       <header className="page__header">
+        <p className="page__eyebrow">A Nossa Loja</p>
         <h1>Loja</h1>
         <p>Adicione produtos ao carrinho e finalize a sua encomenda.</p>
       </header>

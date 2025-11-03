@@ -1,12 +1,14 @@
 const http = require('node:http');
 const https = require('node:https');
 const { URL } = require('node:url');
+const authService = require('./services/authService');
+const jwtUtils = require('./utils/jwt');
 
 // Habilitar CORS para permitir o frontend (localhost:3000)
 const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 };
 
 // Logger simples estruturado
@@ -37,6 +39,44 @@ const readRequestBody = (req) =>
     req.on('error', reject);
   });
 
+const parseJsonBody = async (req) => {
+  try {
+    const raw = await readRequestBody(req);
+    if (!raw) return { ok: true, data: {} };
+    const data = JSON.parse(raw);
+    return { ok: true, data };
+  } catch (error) {
+    return { ok: false, error };
+  }
+};
+
+const extractBearerToken = (req) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || typeof authHeader !== 'string') return null;
+  const [scheme, token] = authHeader.split(' ');
+  if (!scheme || scheme.toLowerCase() !== 'bearer' || !token) return null;
+  return token.trim();
+};
+
+const requireAuth = async (req, res) => {
+  const token = extractBearerToken(req);
+  if (!token) {
+    sendJson(res, 401, { error: 'Token de autenticação não fornecido.' });
+    return null;
+  }
+
+  try {
+    const decoded = await authService.verify(token);
+    req.user = decoded;
+    return { token, user: decoded };
+  } catch (error) {
+    const message = error?.message || 'Token inválido ou expirado.';
+    const status = /não encontrado/i.test(message) ? 404 : 403;
+    sendJson(res, status, { error: message });
+    return null;
+  }
+};
+
 // Base URL do serviço interno (Server 3002)
 const SERVER_BASE_URL = process.env.SERVER_BASE_URL || 'http://localhost:3002';
 const RATE_LIMIT_RPM = Number.parseInt(process.env.RATE_LIMIT_RPM || '60', 10);
@@ -65,21 +105,28 @@ const allowRequest = (ip) => {
 };
 
 // Proxy utilitário para encaminhar pedidos ao serviço interno
-const proxyRequest = (method, pathname, jsonBody) =>
+const proxyRequest = (method, pathname, jsonBody, extraHeaders = {}) =>
   new Promise((resolve, reject) => {
     try {
       const target = new URL(SERVER_BASE_URL);
       const body = jsonBody ? JSON.stringify(jsonBody) : null;
       const isHttps = target.protocol === 'https:';
+      const headers = {
+        'Content-Type': 'application/json',
+        ...extraHeaders,
+      };
+      Object.keys(headers).forEach((key) => {
+        if (typeof headers[key] === 'undefined') delete headers[key];
+      });
+      if (body) {
+        headers['Content-Length'] = Buffer.byteLength(body);
+      }
       const options = {
         hostname: target.hostname,
         port: target.port || (isHttps ? 443 : 80),
         path: pathname,
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': body ? Buffer.byteLength(body) : 0,
-        },
+        headers,
       };
 
       const req = (isHttps ? https : http).request(options, (resp) => {
@@ -123,10 +170,71 @@ const createApp = () => {
       }
     }
 
+    if (req.url === '/auth/register' && req.method === 'POST') {
+      const parsed = await parseJsonBody(req);
+      if (!parsed.ok) {
+        sendJson(res, 400, { error: 'JSON inválido.' });
+        return;
+      }
+      try {
+        const { user, token } = await authService.register(parsed.data);
+        sendJson(res, 201, { message: 'Conta criada com sucesso', user, token });
+      } catch (error) {
+        sendJson(res, 400, { error: error.message || 'Não foi possível criar a conta.' });
+      }
+      return;
+    }
+
+    if (req.url === '/auth/login' && req.method === 'POST') {
+      const parsed = await parseJsonBody(req);
+      if (!parsed.ok) {
+        sendJson(res, 400, { error: 'JSON inválido.' });
+        return;
+      }
+      try {
+        const { token, user } = await authService.login(parsed.data);
+        sendJson(res, 200, { message: 'Login bem-sucedido', token, user });
+      } catch (error) {
+        const status = /credenciais/i.test(error.message || '') ? 401 : 400;
+        sendJson(res, status, { error: error.message || 'Falha na autenticação.' });
+      }
+      return;
+    }
+
+    if (req.url === '/auth/profile' && req.method === 'PUT') {
+      const auth = await requireAuth(req, res);
+      if (!auth) return;
+      const parsed = await parseJsonBody(req);
+      if (!parsed.ok) {
+        sendJson(res, 400, { error: 'JSON inválido.' });
+        return;
+      }
+      try {
+        const { user: updatedUser, token } = await authService.update(auth.user.id, parsed.data || {});
+        sendJson(res, 200, { message: 'Perfil atualizado com sucesso', user: updatedUser, token });
+      } catch (error) {
+        const message = error?.message || 'Não foi possível atualizar o perfil.';
+        const status = /não encontrado/i.test(message) ? 404 : 400;
+        sendJson(res, status, { error: message });
+      }
+      return;
+    }
+
+    if (req.url === '/auth/me' && req.method === 'GET') {
+      const auth = await requireAuth(req, res);
+      if (!auth) return;
+      sendJson(res, 200, { user: auth.user });
+      return;
+    }
+
     // Obter todas as orders (proxy)
     if (req.url === '/orders' && req.method === 'GET') {
+      const auth = await requireAuth(req, res);
+      if (!auth) return;
       try {
-        const upstream = await proxyRequest('GET', '/orders', null);
+        const upstream = await proxyRequest('GET', '/orders', null, {
+          Authorization: req.headers.authorization,
+        });
         sendJson(res, upstream.statusCode, upstream.body);
       } catch (error) {
         console.error('Proxy GET /orders falhou:', error);
@@ -137,16 +245,16 @@ const createApp = () => {
 
     // Criar nova encomenda (proxy)
     if (req.url === '/orders' && req.method === 'POST') {
+      const auth = await requireAuth(req, res);
+      if (!auth) return;
       try {
-        const rawBody = await readRequestBody(req);
-        let data;
-        try {
-          data = JSON.parse(rawBody || '{}');
-        } catch (parseErr) {
+        const parsed = await parseJsonBody(req);
+        if (!parsed.ok) {
           sendJson(res, 400, { error: 'JSON inválido.' });
           return;
         }
 
+        const data = parsed.data;
         const sanitise = (value) => (typeof value === 'string' ? value.trim() : '');
 
         const name = sanitise(data.name);
@@ -165,7 +273,9 @@ const createApp = () => {
         if (business) payload.business = business;
 
         const services = sanitise(data.services);
-        if (services) payload.services = services;
+        if (services) {
+          payload.services = services;
+        }
 
         const message = sanitise(data.message);
         if (message) payload.message = message;
@@ -199,8 +309,13 @@ const createApp = () => {
             .filter(Boolean);
           if (payload.items.length === 0) delete payload.items;
         }
+        if (!payload.services) {
+          payload.services = 'Loja Online';
+        }
 
-        const upstream = await proxyRequest('POST', '/orders', payload);
+        const upstream = await proxyRequest('POST', '/orders', payload, {
+          Authorization: req.headers.authorization,
+        });
         log('info', 'Proxy POST /orders', { status: upstream.statusCode, ip });
         sendJson(res, upstream.statusCode, upstream.body);
       } catch (error) {

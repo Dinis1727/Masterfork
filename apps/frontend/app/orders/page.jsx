@@ -1,6 +1,6 @@
 "use client";
 import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -87,6 +87,7 @@ function CartPrefill({ setValue, setCartDetails }) {
 }
 
 export default function OrdersPage() {
+  const router = useRouter();
   const [success, setSuccess] = React.useState(false);
   const [cartDetails, setCartDetails] = React.useState({
     items: [],
@@ -144,6 +145,11 @@ export default function OrdersPage() {
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Falha ao enviar encomenda:', error);
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        const loginUrl = `/login?next=${encodeURIComponent('/orders')}`;
+        router.push(loginUrl);
+        return;
+      }
       // eslint-disable-next-line no-alert
       alert('Ocorreu um erro. Tente novamente.');
     }

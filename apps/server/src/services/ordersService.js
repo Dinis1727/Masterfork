@@ -1,3 +1,4 @@
+const { Prisma } = require('@prisma/client');
 const prisma = require('../prisma');
 
 // Validação do formulário do frontend
@@ -25,15 +26,21 @@ const validateOrder = (data) => {
 
 // Criação no banco via Prisma
 const createOrder = async (data) => {
-  const created = await prisma.order.create({
-    data: {
-      name: data.name.trim(),
-      business: data.business.trim(),
-      email: data.email.trim(),
-      services: String(data.services),
-      message: data.message || null,
-    },
-  });
+  const payload = {
+    name: data.name.trim(),
+    business: data.business.trim(),
+    email: data.email.trim(),
+    services: String(data.services),
+    message: data.message || null,
+    cartSummary: data.cartSummary || null,
+    items: Array.isArray(data.items) ? data.items : null,
+  };
+
+  if (typeof data.total === 'number' && Number.isFinite(data.total)) {
+    payload.total = new Prisma.Decimal(Number(data.total).toFixed(2));
+  }
+
+  const created = await prisma.order.create({ data: payload });
   return created;
 };
 

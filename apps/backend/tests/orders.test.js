@@ -50,6 +50,7 @@ describe('BFF proxy routes', () => {
   let server;
   let upstream;
   let calls;
+  let authHeader;
 
   beforeEach(async () => {
     const up = await startUpstream();
@@ -57,9 +58,27 @@ describe('BFF proxy routes', () => {
     calls = up.calls;
     process.env.SERVER_BASE_URL = up.url; // set before requiring app
     // Require after setting env so module picks it up
+    delete require.cache[require.resolve('../src/services/authService')];
     delete require.cache[require.resolve('../src/app')];
     const { createApp } = require('../src/app');
     server = createApp();
+
+    const authService = require('../src/services/authService');
+    if (authService && typeof authService.__resetForTests === 'function') {
+      authService.__resetForTests();
+    }
+
+    await request(server)
+      .post('/auth/register')
+      .send({ name: 'Test User', email: 'test@example.com', password: 'secret123' })
+      .expect(201);
+    const login = await request(server)
+      .post('/auth/login')
+      .send({ email: 'test@example.com', password: 'secret123' })
+      .expect(200)
+      .expect('content-type', /json/);
+    assert.ok(login.body.token);
+    authHeader = { Authorization: `Bearer ${login.body.token}` };
   });
 
   afterEach(() => {
@@ -69,7 +88,11 @@ describe('BFF proxy routes', () => {
   });
 
   it('proxies GET /orders to upstream and returns its payload', async () => {
-    const res = await request(server).get('/orders').expect(200).expect('content-type', /json/);
+    const res = await request(server)
+      .get('/orders')
+      .set(authHeader)
+      .expect(200)
+      .expect('content-type', /json/);
     assert.ok(Array.isArray(res.body.orders));
     assert.equal(res.body.orders[0].name, 'Seed');
     assert.ok(calls.find((c) => c.method === 'GET' && c.url === '/orders'));
@@ -83,7 +106,12 @@ describe('BFF proxy routes', () => {
       message: 'Resumo da encomenda:\nItem x1 = €4.00\nTotal: €4.00',
       items: [{ id: 'beer', name: 'Masterbeer IPA', qty: 1, price: 4, lineTotal: 4, image: '/beer.png' }],
     };
-    const res = await request(server).post('/orders').send(payload).expect(201).expect('content-type', /json/);
+    const res = await request(server)
+      .post('/orders')
+      .set(authHeader)
+      .send(payload)
+      .expect(201)
+      .expect('content-type', /json/);
     assert.equal(res.body.success, true);
     assert.equal(res.body.order.name, 'Ana Martins');
     assert.ok(calls.find((c) => c.method === 'POST' && c.url === '/orders'));
@@ -92,10 +120,16 @@ describe('BFF proxy routes', () => {
   it('rejects invalid orders with 400 before proxying', async () => {
     const res = await request(server)
       .post('/orders')
+      .set(authHeader)
       .send({ name: '', email: '' })
       .expect(400)
       .expect('content-type', /json/);
     assert.match(String(res.body.error || ''), /nome e email/i);
+  });
+
+  it('blocks unauthenticated access to orders', async () => {
+    await request(server).get('/orders').expect(401).expect('content-type', /json/);
+    await request(server).post('/orders').send({}).expect(401).expect('content-type', /json/);
   });
 
   it('proxies POST /training with valid payload and GET /training list', async () => {
