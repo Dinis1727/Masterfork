@@ -46,7 +46,7 @@ export default function Home() {
           </p>
 
           <div className="masterbeer__actions">
-            <Link href="/orders" className="btn-primary">Fazer Encomenda</Link>
+            <Link href="/shop" className="btn-primary"> Ver Loja</Link>
           </div>
         </div>
 

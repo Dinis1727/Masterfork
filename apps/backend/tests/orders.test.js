@@ -76,20 +76,26 @@ describe('BFF proxy routes', () => {
   });
 
   it('proxies POST /orders with valid payload', async () => {
-    const payload = { name: 'Ana', business: 'Mar', email: 'ana@example.com', services: 'menus', message: 'ok' };
+    const payload = {
+      name: 'Ana Martins',
+      business: '',
+      email: 'ana@example.com',
+      message: 'Resumo da encomenda:\nItem x1 = €4.00\nTotal: €4.00',
+      items: [{ id: 'beer', name: 'Masterbeer IPA', qty: 1, price: 4, lineTotal: 4, image: '/beer.png' }],
+    };
     const res = await request(server).post('/orders').send(payload).expect(201).expect('content-type', /json/);
     assert.equal(res.body.success, true);
-    assert.equal(res.body.order.name, 'Ana');
+    assert.equal(res.body.order.name, 'Ana Martins');
     assert.ok(calls.find((c) => c.method === 'POST' && c.url === '/orders'));
   });
 
   it('rejects invalid orders with 400 before proxying', async () => {
     const res = await request(server)
       .post('/orders')
-      .send({ name: '', business: '', email: '', services: '' })
+      .send({ name: '', email: '' })
       .expect(400)
       .expect('content-type', /json/);
-    assert.match(String(res.body.error || ''), /obrigat|Campos|falt/i);
+    assert.match(String(res.body.error || ''), /nome e email/i);
   });
 
   it('proxies POST /training with valid payload and GET /training list', async () => {

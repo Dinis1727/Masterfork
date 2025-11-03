@@ -14,7 +14,7 @@
     "dev:server": "npm --prefix apps/server run dev"
   },
   "devDependencies": {
-    "@masterfork/config": "workspace:*"
-  },
-  "dependencies": {}
+    "@masterfork/config": "workspace:*",
+    "prettier": "^3.6.2"
+  }
 }

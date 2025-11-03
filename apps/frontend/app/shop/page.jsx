@@ -76,10 +76,29 @@ export default function ShopPage() {
   const total = cartItems.reduce((acc, it) => acc + it.lineTotal, 0);
 
   const summary = cartItems.length
-    ? cartItems.map((it) => `${it.name} x${it.qty} = €${it.lineTotal.toFixed(2)}`).join(' | ') + ` | Total: €${total.toFixed(2)}`
+    ? cartItems.map((it) => `${it.name} x${it.qty} = €${it.lineTotal.toFixed(2)}`).join(' | ') +
+      ` | Total: €${total.toFixed(2)}`
     : '';
 
-  const ordersLink = `/orders${summary ? `?cart=${encodeURIComponent(summary)}` : ''}`;
+  const cartDataParam = cartItems.length
+    ? encodeURIComponent(
+        JSON.stringify(
+          cartItems.map(({ id, name, qty, price, image, lineTotal }) => ({
+            id,
+            name,
+            qty,
+            price,
+            image,
+            lineTotal,
+          }))
+        )
+      )
+    : '';
+
+  const ordersLink =
+    cartItems.length && summary
+      ? `/orders?cart=${encodeURIComponent(summary)}&items=${cartDataParam}`
+      : '/orders';
 
   // Infer category from id
   const categoryOf = (p) => {
@@ -186,9 +205,15 @@ export default function ShopPage() {
             <strong>€{total.toFixed(2)}</strong>
           </div>
           <div className="cart__actions">
-            <Link href={ordersLink} className="btn-primary" aria-disabled={cartItems.length === 0}>
-              Finalizar encomenda
-            </Link>
+            {cartItems.length === 0 ? (
+              <button className="btn-primary" type="button" disabled>
+                Finalizar encomenda
+              </button>
+            ) : (
+              <Link href={ordersLink} className="btn-primary">
+                Finalizar encomenda
+              </Link>
+            )}
           </div>
         </aside>
       </div>

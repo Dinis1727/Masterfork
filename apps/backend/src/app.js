@@ -139,13 +139,68 @@ const createApp = () => {
     if (req.url === '/orders' && req.method === 'POST') {
       try {
         const rawBody = await readRequestBody(req);
-        const data = JSON.parse(rawBody || '{}');
-        // Validação rápida no BFF
-        if (!data.name || !data.business || !data.email || !data.services) {
-          sendJson(res, 400, { error: 'Campos obrigatórios em falta.' });
+        let data;
+        try {
+          data = JSON.parse(rawBody || '{}');
+        } catch (parseErr) {
+          sendJson(res, 400, { error: 'JSON inválido.' });
           return;
         }
-        const upstream = await proxyRequest('POST', '/orders', data);
+
+        const sanitise = (value) => (typeof value === 'string' ? value.trim() : '');
+
+        const name = sanitise(data.name);
+        const email = sanitise(data.email);
+        if (!name || !email) {
+          sendJson(res, 400, { error: 'Nome e email são obrigatórios.' });
+          return;
+        }
+
+        const payload = {
+          name,
+          email,
+        };
+
+        const business = sanitise(data.business);
+        if (business) payload.business = business;
+
+        const services = sanitise(data.services);
+        if (services) payload.services = services;
+
+        const message = sanitise(data.message);
+        if (message) payload.message = message;
+
+        const summary = sanitise(data.cartSummary);
+        if (summary) payload.cartSummary = summary;
+
+        if (Array.isArray(data.items)) {
+          payload.items = data.items
+            .map((item) => {
+              if (!item || typeof item !== 'object') return null;
+              const itemId = sanitise(item.id) || undefined;
+              const nameEntry = sanitise(item.name) || undefined;
+              const qty = Number(item.qty);
+              const price = Number(item.price);
+              const lineTotal = Number(item.lineTotal);
+              const image = sanitise(item.image) || undefined;
+
+              if (!nameEntry || !Number.isFinite(qty) || qty <= 0) return null;
+
+              const result = {
+                name: nameEntry,
+                qty,
+              };
+              if (itemId) result.id = itemId;
+              if (Number.isFinite(price)) result.price = price;
+              if (Number.isFinite(lineTotal)) result.lineTotal = lineTotal;
+              if (image) result.image = image;
+              return result;
+            })
+            .filter(Boolean);
+          if (payload.items.length === 0) delete payload.items;
+        }
+
+        const upstream = await proxyRequest('POST', '/orders', payload);
         log('info', 'Proxy POST /orders', { status: upstream.statusCode, ip });
         sendJson(res, upstream.statusCode, upstream.body);
       } catch (error) {

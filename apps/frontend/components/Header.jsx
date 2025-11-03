@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 const NavLink = ({ href, children, cta = false }) => {
   const pathname = usePathname();
   // Determine active link based on current pathname
-  const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
+  const target = href.split('#')[0] || href;
+  const isActive = target === '/' ? pathname === '/' : pathname.startsWith(target);
   const base = 'nav__link' + (cta ? ' nav__cta' : '');
   const cls = isActive ? `${base} nav__link--active` : base;
   return (
@@ -29,6 +30,7 @@ export default function Header() {
         <NavLink href="/">Início</NavLink>
         <NavLink href="/services">Nossos Serviços</NavLink>
         <NavLink href="/shop">Loja</NavLink>
+        <NavLink href="/contacts">Contactos</NavLink>
         <NavLink href="/orders" cta>Fazer Encomenda</NavLink>
       </nav>
     </header>
