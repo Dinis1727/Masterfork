@@ -3,8 +3,8 @@ import React from 'react';
 import useRevealOnScroll from '../hooks/useRevealOnScroll';
 import { HealthAPI } from '../lib/api';
 
-// Client-only component to attach effects (reveal-on-scroll, API health check)
-export default function HomeClient() {
+// Global client-side effects: reveal-on-scroll + API health ping
+export default function AppClient() {
   useRevealOnScroll();
 
   React.useEffect(() => {
@@ -21,4 +21,3 @@ export default function HomeClient() {
 
   return null;
 }
-

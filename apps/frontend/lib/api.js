@@ -79,7 +79,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export const HealthAPI = {
-  ping: () => api.get('/'),
+  ping: () => api.get('/health'),
 };
 
 export const OrdersAPI = {

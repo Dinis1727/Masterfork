@@ -1,71 +1,98 @@
 import Link from 'next/link';
 
+const pillBase =
+  'inline-flex items-center justify-center whitespace-nowrap rounded-full px-5 py-2 font-semibold tracking-wide transition duration-200';
+
 const services = [
   {
     id: 'consultoria',
-    title: 'Consultoria',
+    title: 'Consultoria Estratégica',
     intro:
-      'Desenvolvemos estratégias inovadoras para optimizar operações e garantir um crescimento sustentável para o seu projecto.',
+      'Mapeamos processos, redesenhamos operações e definimos roadmaps executáveis para restaurantes, hotéis e dark kitchens.',
     details:
-      'Mapeamos processos, desenhamos planos de implementação e acompanhamo-lo desde a visão até aos resultados medidos.',
+      'Do diagnóstico aos indicadores de performance: implementamos tecnologia, métricas e rituais operacionais para criar equipas de alta performance.',
+    cta: 'Falar com consultor',
   },
   {
     id: 'formacao',
-    title: 'Formação',
+    title: 'Academia & Formação',
     intro:
-      'Com programas focados nas necessidades do mercado, formamos equipas experientes e um serviço consistente.',
+      'Planos de formação contínua para cozinha, bar, pastelaria e serviço de sala. Métodos blended com mentoria e certificação.',
     details:
-      'Academias presenciais e digitais com chefs, baristas e gestores especializados para capacitar cada área do negócio.',
+      'Programas imersivos adaptados à cultura da sua marca, com avaliação prática, e-learning e turmas in company.',
+    cta: 'Calendário de cursos',
   },
   {
     id: 'renting',
-    title: 'Renting',
+    title: 'Renting de Equipamentos',
     intro:
-      'Acesso a soluções flexíveis de equipamentos sem o investimento inicial elevado exigido pelos sectores gastronómicos.',
+      'Infraestrutura moderna sem investimento inicial: cozinhas modulares, cafetarias, equipamentos de frio e pastelaria.',
     details:
-      'Planos mensais transparentes que incluem instalação, manutenção preventiva e substituição em caso de avaria.',
+      'Modelos mensais transparentes com instalação, manutenção preventiva e suporte 24/7. Atualize o parque tecnológico quando precisar.',
+    cta: 'Simular plano',
   },
   {
     id: 'recrutamento',
-    title: 'Recrutamento',
+    title: 'Recrutamento & Talent Hub',
     intro:
-      'Identificamos e recrutamos profissionais qualificados nas melhores operações de hotelaria.',
+      'Ligamos talento especializado às operações certas. Recrutamento técnico com onboarding, avaliação cultural e mentoring.',
     details:
-      'Processos personalizados que combinam avaliação técnica, cultural e formação de integração para maximizar a retenção.',
+      'Workshops e bootcamps para equipas recém-formadas, garantindo retenção e consistência de serviço.',
+    cta: 'Solicitar shortlist',
   },
 ];
 
 export default function ServicesPage() {
   return (
-    <div className="page services-page">
-      <header className="page__header">
-        <p className="eyebrow">Os Nossos Serviços</p>
-        <h1>Parceiros em cada etapa do seu projecto</h1>
-        <p>
-          Inspirados na oferta da MasterFork, condensámos a nossa proposta em quatro pilares. Desde a
-          concepção estratégica até à entrega diária, trabalhamos lado a lado com a sua equipa para garantir
-          experiências memoráveis em sala e cozinha.
+    <div className="space-y-12 text-bark-100">
+      <header
+        data-reveal
+        className="translate-y-6 space-y-4 text-center opacity-0"
+        style={{ transitionDelay: '0.05s' }}
+      >
+        <span className="inline-flex items-center rounded-full border border-amberglass/40 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-amberglass">
+          Os Nossos Serviços
+        </span>
+        <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">Parceiros em cada etapa do seu projecto</h1>
+        <p className="mx-auto max-w-3xl text-sm leading-relaxed text-bark-100/80 sm:text-base">
+          Da concepção estratégica à operação diária, combinamos consultoria, formação, tecnologia e talento para entregar experiências memoráveis na hotelaria e restauração.
         </p>
       </header>
-      <section className="services-grid" aria-label="Lista de serviços">
-        {services.map(({ id, title, intro }) => (
-          <article key={id} className="service-card" id={id}>
+
+      <section className="grid gap-8 md:grid-cols-2" aria-label="Lista de serviços">
+        {services.map(({ id, title, intro, details, cta }, index) => (
+          <article
+            key={id}
+            data-reveal
+            className="flex h-full translate-y-6 flex-col overflow-hidden rounded-3xl border border-bark-800/60 bg-bark-900/70 opacity-0 shadow-brand backdrop-blur-md"
+            style={{ transitionDelay: `${0.1 + index * 0.05}s` }}
+          >
             <div
-              className={`service-card__media service-card__media--${id}`}
+              className="relative h-48 overflow-hidden"
               aria-hidden="true"
-              style={{
-                backgroundImage: `url(/services/${id}.webp), url(/services/${id}.jpg), url(/services/${id}.png)`,
-              }}
-            />
-            <div className="service-card__body">
-              <h2>{title}</h2>
-              <p className="service-card__intro">{intro}</p>
-              <Link
-                className="service-card__link"
-                href={id === 'formacao' ? '/training' : `#${id}`}
-              >
-                Saber mais
-              </Link>
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-bark-900/60 via-transparent to-bark-950/80" />
+              <div
+                className="h-full w-full bg-cover bg-center"
+                style={{
+                  backgroundImage: `url(/services/${id}.png)`,
+                }}
+              />
+            </div>
+            <div className="flex flex-1 flex-col gap-4 p-6">
+              <div className="space-y-3">
+                <h2 className="text-2xl font-semibold text-white">{title}</h2>
+                <p className="text-sm text-amberglass/80">{intro}</p>
+                <p className="text-sm text-bark-100/70">{details}</p>
+              </div>
+              <div className="mt-auto">
+                <Link
+                  className={`${pillBase} bg-amber-gradient text-bark-900 shadow-soft hover:shadow-brand`}
+                  href={id === 'formacao' ? '/training' : id === 'renting' ? '/contacts?type=renting' : '/contacts'}
+                >
+                  {cta}
+                </Link>
+              </div>
             </div>
           </article>
         ))}

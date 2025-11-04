@@ -74,6 +74,8 @@ exports.register = async ({ name, email, password }) => {
   const cleanedPassword = String(password || '').trim();
 
   if (!cleanedName || !cleanedEmail || !cleanedPassword) {
+    // eslint-disable-next-line no-console
+    console.warn('[authService] Registo inválido', { cleanedName, cleanedEmail, hasPassword: !!cleanedPassword });
     throw new Error('Nome, email e palavra-passe são obrigatórios.');
   }
 
@@ -83,6 +85,8 @@ exports.register = async ({ name, email, password }) => {
 
   const existingUser = users.find((user) => user.email === cleanedEmail);
   if (existingUser) {
+    // eslint-disable-next-line no-console
+    console.warn('[authService] Email já registado tentativa:', cleanedEmail);
     throw new Error('Email já registado.');
   }
 
@@ -186,6 +190,13 @@ exports.verify = async (token) => {
 
 // Utilitário para facilitar testes
 exports.__resetForTests = () => {
-  users.length = 0;
+  users = [];
+  try {
+    if (fs.existsSync(USERS_FILE)) {
+      fs.unlinkSync(USERS_FILE);
+    }
+  } catch (error) {
+    console.error('Falha ao limpar ficheiro de utilizadores nos testes:', error);
+  }
   saveUsers(users);
 };

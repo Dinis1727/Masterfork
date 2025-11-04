@@ -7,6 +7,9 @@ import { useRouter } from 'next/navigation';
 import { OrdersAPI, AuthAPI } from '../../lib/api';
 import { useAuth } from '../../components/AuthProvider';
 
+const pillBase =
+  'inline-flex items-center justify-center whitespace-nowrap rounded-full px-5 py-2 font-semibold tracking-wide transition duration-200';
+
 const parseCurrency = (value) => {
   if (typeof value === 'number') return value;
   if (typeof value !== 'string') return null;
@@ -267,52 +270,82 @@ export default function ProfilePage() {
 
   if (loading || !user) {
     return (
-      <div className="page profile-page">
-        <p>A carregar perfil...</p>
+      <div className="flex min-h-[40vh] items-center justify-center rounded-3xl border border-bark-800/70 bg-bark-900/70 p-10 text-sm text-bark-100/70">
+        A carregar perfil...
       </div>
     );
   }
 
+  const tabButton = (tab, label) => {
+    const isActive = activeTab === tab;
+    return (
+      <button
+        type="button"
+        key={tab}
+        className={`${pillBase} px-6 py-2 text-sm font-semibold ${
+          isActive
+            ? 'bg-amber-gradient text-bark-900 shadow-soft'
+            : 'bg-transparent text-bark-100/80 hover:text-amberglass'
+        }`}
+        role="tab"
+        aria-selected={isActive}
+        onClick={() => setActiveTab(tab)}
+      >
+        {label}
+      </button>
+    );
+  };
+
   return (
-    <div className="page profile-page">
-      <header className="profile-page__header">
-        <div className="profile-page__headline">
-          <p className="page__eyebrow">Perfil</p>
-          <h1>Olá, {user.name || user.email}</h1>
-          <p>Consulte as suas encomendas recentes e atualize os seus dados sempre que necessário.</p>
+    <div className="space-y-8">
+      <header
+        data-reveal
+        className="flex translate-y-6 flex-col gap-6 rounded-3xl border border-bark-800/70 bg-bark-900/70 p-8 opacity-0 shadow-brand backdrop-blur-md md:flex-row md:items-start md:justify-between"
+        style={{ transitionDelay: '0.05s' }}
+      >
+        <div className="space-y-3">
+          <span className="inline-flex items-center rounded-full border border-amberglass/40 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-amberglass">
+            Perfil
+          </span>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Olá, {user.name || user.email}</h1>
+            <p className="mt-2 max-w-2xl text-sm text-bark-100/80">
+              Consulte as suas encomendas recentes, acompanhe o histórico MasterBeer e atualize os seus dados sempre que necessário.
+            </p>
+          </div>
         </div>
-        <button type="button" className="btn-secondary" onClick={handleLogout}>
+        <button
+          type="button"
+          className={`${pillBase} bg-bark-950/70 text-bark-100 hover:bg-bark-900`}
+          onClick={handleLogout}
+        >
           Terminar sessão
         </button>
       </header>
 
-      <div className="profile-tabs" role="tablist">
-        <button
-          type="button"
-          className={`profile-tab${activeTab === 'orders' ? ' profile-tab--active' : ''}`}
-          role="tab"
-          aria-selected={activeTab === 'orders'}
-          onClick={() => setActiveTab('orders')}
-        >
-          Encomendas
-        </button>
-        <button
-          type="button"
-          className={`profile-tab${activeTab === 'account' ? ' profile-tab--active' : ''}`}
-          role="tab"
-          aria-selected={activeTab === 'account'}
-          onClick={() => setActiveTab('account')}
-        >
-          Dados da conta
-        </button>
+      <div
+        data-reveal
+        className="inline-flex translate-y-6 items-center gap-2 rounded-full border border-bark-800/70 bg-bark-900/70 p-1 opacity-0 shadow-soft backdrop-blur-md"
+        role="tablist"
+        style={{ transitionDelay: '0.1s' }}
+      >
+        {tabButton('orders', 'Encomendas')}
+        {tabButton('account', 'Dados da conta')}
       </div>
 
       {activeTab === 'account' ? (
-        <section className="profile-card" role="tabpanel">
-          <h2>Dados da conta</h2>
-          <form className="profile-account-form" onSubmit={handleAccountSubmit}>
-            <div className="form__row">
-              <label htmlFor="account-name">Nome</label>
+        <section
+          data-reveal
+          className="translate-y-6 space-y-6 rounded-3xl border border-bark-800/70 bg-bark-900/70 p-8 opacity-0 shadow-brand backdrop-blur-md"
+          role="tabpanel"
+          style={{ transitionDelay: '0.15s' }}
+        >
+          <h2 className="text-2xl font-semibold text-white">Dados da conta</h2>
+          <form className="grid gap-6 md:grid-cols-2" onSubmit={handleAccountSubmit}>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="account-name" className="text-sm font-semibold text-bark-100">
+                Nome
+              </label>
               <input
                 id="account-name"
                 name="name"
@@ -320,11 +353,14 @@ export default function ProfilePage() {
                 value={accountForm.name}
                 onChange={handleAccountChange}
                 placeholder="O seu nome"
+                className="rounded-2xl border border-bark-700/70 bg-bark-950/60 px-4 py-3 text-sm text-bark-100 outline-none transition focus:border-amberglass focus:ring-2 focus:ring-amberglass/40"
               />
             </div>
 
-            <div className="form__row">
-              <label htmlFor="account-email">Email</label>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="account-email" className="text-sm font-semibold text-bark-100">
+                Email
+              </label>
               <input
                 id="account-email"
                 name="email"
@@ -332,46 +368,56 @@ export default function ProfilePage() {
                 value={accountForm.email}
                 onChange={handleAccountChange}
                 placeholder="nome@masterfork.pt"
+                className="rounded-2xl border border-bark-700/70 bg-bark-950/60 px-4 py-3 text-sm text-bark-100 outline-none transition focus:border-amberglass focus:ring-2 focus:ring-amberglass/40"
               />
             </div>
 
             {accountMessage && (
-              <div className="success-message" role="status">
+              <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-200 md:col-span-2" role="status">
                 {accountMessage}
               </div>
             )}
             {accountError && (
-              <div className="profile-card__error" role="alert">
+              <div className="rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-200 md:col-span-2" role="alert">
                 {accountError}
               </div>
             )}
 
-            <div className="profile-account-actions">
-              <button type="submit" className="btn-primary" disabled={savingAccount}>
+            <div className="flex flex-wrap items-center gap-4 md:col-span-2">
+              <button
+                type="submit"
+                className={`${pillBase} bg-amber-gradient text-bark-900 shadow-soft hover:shadow-brand disabled:cursor-not-allowed disabled:opacity-60`}
+                disabled={savingAccount}
+              >
                 {savingAccount ? 'A guardar...' : 'Guardar alterações'}
               </button>
-              <Link href="/contacts" className="profile-card__link">
+              <Link href="/contacts" className="text-sm font-semibold text-amberglass hover:underline">
                 Necessita de ajuda?
               </Link>
             </div>
           </form>
         </section>
       ) : (
-        <section className="profile-card" role="tabpanel">
-          <div className="profile-card__header">
-            <h2>Histórico de encomendas</h2>
-            <Link href="/shop" className="btn-secondary">
+        <section
+          data-reveal
+          className="translate-y-6 space-y-6 rounded-3xl border border-bark-800/70 bg-bark-900/70 p-8 opacity-0 shadow-brand backdrop-blur-md"
+          role="tabpanel"
+          style={{ transitionDelay: '0.18s' }}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-2xl font-semibold text-white">Histórico de encomendas</h2>
+            <Link href="/shop" className={`${pillBase} bg-bark-950/70 text-bark-100 hover:bg-bark-900`}>
               Nova encomenda
             </Link>
           </div>
           {loadingOrders ? (
-            <p>A carregar encomendas...</p>
+            <p className="text-sm text-bark-400">A carregar encomendas...</p>
           ) : ordersError ? (
-            <p className="profile-card__error">{ordersError}</p>
+            <p className="rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-200">{ordersError}</p>
           ) : sortedOrders.length === 0 ? (
-            <p>Ainda não existem encomendas associadas à sua conta.</p>
+            <p className="text-sm text-bark-400">Ainda não existem encomendas associadas à sua conta.</p>
           ) : (
-            <ul className="profile-orders">
+            <ul className="space-y-5">
               {sortedOrders.map((order, index) => {
                 const details = extractOrderDetails(order);
                 const { date, time } = formatOrderDate(order.createdAt || order.created_at);
@@ -379,60 +425,52 @@ export default function ProfilePage() {
                 return (
                   <li
                     key={order.id || order.orderId || order.createdAt || `order-${index}`}
-                    className="profile-orders__item"
+                    className="rounded-3xl border border-bark-800/70 bg-bark-950/60 p-6 shadow-soft transition hover:border-amberglass/40 hover:shadow-brand"
                   >
-                    <header className="profile-orders__header">
+                    <header className="flex flex-col gap-3 border-b border-bark-800/70 pb-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="profile-orders__timestamp">
-                          <span>{date}</span>
-                          {time ? <span>{time}</span> : null}
+                        <p className="text-sm font-semibold text-white">
+                          {date}
+                          {time ? <span className="ml-2 text-xs text-bark-400">{time}</span> : null}
                         </p>
-                        <p className="profile-orders__summary">
-                          {itemCount > 0
-                            ? `${itemCount} ${itemCount === 1 ? 'produto' : 'produtos'}`
-                            : 'Detalhes disponíveis abaixo'}
+                        <p className="text-xs uppercase tracking-widest text-bark-500">
+                          {itemCount > 0 ? `${itemCount} ${itemCount === 1 ? 'produto' : 'produtos'}` : 'Detalhes disponíveis abaixo'}
                         </p>
                       </div>
                       {details.total !== null ? (
-                        <span className="profile-orders__total">
+                        <span className="rounded-full border border-amberglass/40 px-4 py-1 text-sm font-semibold text-amberglass">
                           €{details.total.toFixed(2)}
                         </span>
                       ) : null}
                     </header>
 
                     {details.items.length > 0 ? (
-                      <div className="cart-preview cart-preview--order-history" role="list">
+                      <div className="mt-4 space-y-3">
                         {details.items.map((item) => {
-                          const hasImage =
-                            typeof item.image === 'string' && item.image.startsWith('/');
+                          const hasImage = typeof item.image === 'string' && item.image.startsWith('/');
                           return (
-                            <div key={item.id} className="cart-preview__item" role="listitem">
-                              <div className="cart-preview__media">
+                            <div key={item.id} className="flex items-center gap-4 rounded-2xl border border-bark-800/70 bg-bark-900/60 p-4">
+                              <div className="h-16 w-16 overflow-hidden rounded-xl border border-bark-800/70 bg-bark-950/70">
                                 {hasImage ? (
                                   <Image
                                     src={item.image}
                                     alt={item.name}
                                     width={72}
                                     height={72}
-                                    className="cart-preview__image"
+                                    className="h-full w-full object-cover"
                                   />
                                 ) : (
-                                  <div className="cart-preview__placeholder" aria-hidden="true">
-                                    🍽️
-                                  </div>
+                                  <div className="flex h-full w-full items-center justify-center text-xl">🍽️</div>
                                 )}
                               </div>
-                              <div className="cart-preview__details">
-                                <span className="cart-preview__name">{item.name}</span>
-                                <span className="cart-preview__meta">
-                                  {item.qty} x{' '}
-                                  {Number.isFinite(item.price)
-                                    ? `€${item.price.toFixed(2)}`
-                                    : '—'}
+                              <div className="flex flex-1 flex-col gap-1 text-sm text-bark-100/80">
+                                <span className="font-semibold text-white">{item.name}</span>
+                                <span className="text-xs text-bark-400">
+                                  {item.qty} x {Number.isFinite(item.price) ? `€${item.price.toFixed(2)}` : '—'}
                                 </span>
                               </div>
                               {Number.isFinite(item.lineTotal) ? (
-                                <span className="cart-preview__line-total">
+                                <span className="text-sm font-semibold text-amberglass">
                                   €{item.lineTotal.toFixed(2)}
                                 </span>
                               ) : null}
@@ -440,14 +478,16 @@ export default function ProfilePage() {
                           );
                         })}
                         {Number.isFinite(details.total) ? (
-                          <div className="cart-preview__total">
+                          <div className="flex justify-end text-sm font-semibold text-amberglass">
                             Total: €{details.total.toFixed(2)}
                           </div>
                         ) : null}
                       </div>
                     ) : null}
                     {details.summaryNote ? (
-                      <pre className="profile-orders__note">{details.summaryNote}</pre>
+                      <pre className="mt-4 whitespace-pre-wrap rounded-2xl border border-bark-800/70 bg-bark-900/60 px-4 py-3 text-xs text-bark-300">
+                        {details.summaryNote}
+                      </pre>
                     ) : null}
                   </li>
                 );

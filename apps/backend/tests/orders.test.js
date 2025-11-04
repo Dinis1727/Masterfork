@@ -1,4 +1,4 @@
-const { beforeEach, afterEach, describe, it } = require('node:test');
+const test = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const request = require('supertest');
@@ -10,7 +10,7 @@ const startUpstream = () => {
     calls.push({ method: req.method, url: req.url });
     let body = '';
     req.on('data', (c) => (body += c));
-    await new Promise((r) => req.on('end', r));
+    await new Promise((resolve) => req.on('end', resolve));
     const json = body ? JSON.parse(body) : {};
 
     if (req.method === 'GET' && req.url === '/orders') {
@@ -46,13 +46,13 @@ const startUpstream = () => {
   });
 };
 
-describe('BFF proxy routes', () => {
-  let server;
-  let upstream;
-  let calls;
-  let authHeader;
+let server;
+let upstream;
+let calls;
+let authHeader;
+let testUserEmail;
 
-  beforeEach(async () => {
+test.beforeEach(async () => {
     const up = await startUpstream();
     upstream = up.upstream;
     calls = up.calls;
@@ -68,26 +68,28 @@ describe('BFF proxy routes', () => {
       authService.__resetForTests();
     }
 
+    testUserEmail = `test-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
+
     await request(server)
       .post('/auth/register')
-      .send({ name: 'Test User', email: 'test@example.com', password: 'secret123' })
+      .send({ name: 'Test User', email: testUserEmail, password: 'secret123' })
       .expect(201);
     const login = await request(server)
       .post('/auth/login')
-      .send({ email: 'test@example.com', password: 'secret123' })
+      .send({ email: testUserEmail, password: 'secret123' })
       .expect(200)
       .expect('content-type', /json/);
     assert.ok(login.body.token);
     authHeader = { Authorization: `Bearer ${login.body.token}` };
   });
 
-  afterEach(() => {
+test.afterEach(() => {
     if (server && server.close) server.close();
     if (upstream && upstream.close) upstream.close();
     delete process.env.SERVER_BASE_URL;
   });
 
-  it('proxies GET /orders to upstream and returns its payload', async () => {
+test('BFF proxy routes: proxies GET /orders to upstream and returns its payload', async () => {
     const res = await request(server)
       .get('/orders')
       .set(authHeader)
@@ -98,7 +100,7 @@ describe('BFF proxy routes', () => {
     assert.ok(calls.find((c) => c.method === 'GET' && c.url === '/orders'));
   });
 
-  it('proxies POST /orders with valid payload', async () => {
+test('BFF proxy routes: proxies POST /orders with valid payload', async () => {
     const payload = {
       name: 'Ana Martins',
       business: '',
@@ -117,7 +119,7 @@ describe('BFF proxy routes', () => {
     assert.ok(calls.find((c) => c.method === 'POST' && c.url === '/orders'));
   });
 
-  it('rejects invalid orders with 400 before proxying', async () => {
+test('BFF proxy routes: rejects invalid orders with 400 before proxying', async () => {
     const res = await request(server)
       .post('/orders')
       .set(authHeader)
@@ -127,12 +129,12 @@ describe('BFF proxy routes', () => {
     assert.match(String(res.body.error || ''), /nome e email/i);
   });
 
-  it('blocks unauthenticated access to orders', async () => {
+test('BFF proxy routes: blocks unauthenticated access to orders', async () => {
     await request(server).get('/orders').expect(401).expect('content-type', /json/);
     await request(server).post('/orders').send({}).expect(401).expect('content-type', /json/);
   });
 
-  it('proxies POST /training with valid payload and GET /training list', async () => {
+test('BFF proxy routes: proxies POST /training and GET /training list', async () => {
     const payload = { nome: 'Dinis', email: 'd@example.com', formacao: 'mesa' };
     const created = await request(server).post('/training').send(payload).expect(201).expect('content-type', /json/);
     assert.equal(created.body.success, true);
@@ -142,4 +144,3 @@ describe('BFF proxy routes', () => {
     assert.ok(Array.isArray(list.body.items));
     assert.ok(calls.find((c) => c.method === 'GET' && c.url === '/training'));
   });
-});

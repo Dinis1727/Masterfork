@@ -18,10 +18,10 @@ exports.list = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-    const { errors, payload } = ordersService.validateOrderPayload(req.body);
+    const { errors, payload } = ordersService.validateOrderPayload(req.body || {});
 
     if (errors.length > 0) {
-      res.status(400).json({ errors });
+      res.status(400).json({ error: errors.join(' ') });
       return;
     }
 

@@ -2,24 +2,24 @@ const authService = require('../services/authService');
 
 exports.register = async (req, res, next) => {
   try {
-    const { user, token } = await authService.register(req.body);
+    const { user, token } = await authService.register(req.body || {});
     res.status(201).json({ message: 'Conta criada com sucesso', user, token });
-  } catch (err) {
-    if (err && err.message) {
-      res.status(400).json({ error: err.message });
+  } catch (error) {
+    if (error && error.message) {
+      res.status(400).json({ error: error.message });
       return;
     }
-    next(err);
+    next(error);
   }
 };
 
-exports.login = async (req, res, next) => {
+exports.login = async (req, res) => {
   try {
-    const { token, user } = await authService.login(req.body);
+    const { token, user } = await authService.login(req.body || {});
     res.json({ message: 'Login bem-sucedido', token, user });
-  } catch (err) {
-    const status = err && /credenciais/i.test(err.message) ? 401 : 400;
-    res.status(status).json({ error: err.message || 'Falha na autenticação' });
+  } catch (error) {
+    const status = error && /credenciais|não encontrado/i.test(error.message) ? 401 : 400;
+    res.status(status).json({ error: error.message || 'Falha na autenticação' });
   }
 };
 
@@ -35,7 +35,25 @@ exports.verifyToken = async (req, res) => {
   try {
     const user = await authService.verify(token);
     res.json({ user });
-  } catch (err) {
-    res.status(403).json({ error: err.message || 'Token inválido ou expirado.' });
+  } catch (error) {
+    res.status(403).json({ error: error.message || 'Token inválido ou expirado.' });
   }
+};
+
+exports.profile = async (req, res, next) => {
+  try {
+    const { user, token } = await authService.update(req.user.id, req.body || {});
+    res.json({ message: 'Perfil atualizado com sucesso', user, token });
+  } catch (error) {
+    if (error && error.message) {
+      const status = /não encontrado/i.test(error.message) ? 404 : 400;
+      res.status(status).json({ error: error.message });
+      return;
+    }
+    next(error);
+  }
+};
+
+exports.me = async (req, res) => {
+  res.json({ user: req.user });
 };

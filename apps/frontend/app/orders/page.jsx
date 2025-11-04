@@ -7,16 +7,16 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { OrdersAPI } from '../../lib/api';
 
+const pillBase =
+  'inline-flex items-center justify-center whitespace-nowrap rounded-full px-5 py-2 font-semibold tracking-wide transition duration-200';
+
 const schema = z.object({
   name: z.string().min(2, 'Nome obrigatório'),
   business: z
     .string()
     .trim()
     .optional()
-    .refine(
-      (value) => !value || value.length >= 2,
-      'O nome do estabelecimento deve ter pelo menos 2 caracteres'
-    ),
+    .refine((value) => !value || value.length >= 2, 'O nome do estabelecimento deve ter pelo menos 2 caracteres'),
   email: z.string().email('Indique um email válido'),
   message: z.string().max(2000).optional(),
 });
@@ -40,9 +40,7 @@ function CartPrefill({ setValue, setCartDetails }) {
               if (qty <= 0) return null;
               const price = Number(item.price) || 0;
               const lineRaw = Number(item.lineTotal);
-              const lineTotal = Number.isFinite(lineRaw)
-                ? lineRaw
-                : Math.round(price * qty * 100) / 100;
+              const lineTotal = Number.isFinite(lineRaw) ? lineRaw : Math.round(price * qty * 100) / 100;
               return {
                 id: item.id ? String(item.id) : String(item.name || 'item'),
                 name: item.name ? String(item.name) : 'Item',
@@ -115,15 +113,10 @@ export default function OrdersPage() {
     try {
       const name = typeof data.name === 'string' ? data.name.trim() : '';
       const email = typeof data.email === 'string' ? data.email.trim() : '';
-      const business =
-        typeof data.business === 'string' && data.business.trim().length > 0 ? data.business.trim() : undefined;
+      const business = typeof data.business === 'string' && data.business.trim().length > 0 ? data.business.trim() : undefined;
       const message = typeof data.message === 'string' && data.message.trim().length > 0 ? data.message.trim() : '';
 
-      const payload = {
-        name,
-        email,
-      };
-
+      const payload = { name, email };
       if (business) payload.business = business;
       if (message) payload.message = message;
       if (cartDetails.summaryText) payload.cartSummary = cartDetails.summaryText;
@@ -137,6 +130,7 @@ export default function OrdersPage() {
         res.status < 300 &&
         ((res.data && typeof res.data.message === 'string') || (res.data && res.data.success === true));
       if (!ok) throw new Error('Resposta inválida do servidor');
+
       setSuccess(true);
       reset();
       if (cartDetails.summaryText) {
@@ -146,8 +140,7 @@ export default function OrdersPage() {
       // eslint-disable-next-line no-console
       console.error('Falha ao enviar encomenda:', error);
       if (error?.response?.status === 401 || error?.response?.status === 403) {
-        const loginUrl = `/login?next=${encodeURIComponent('/orders')}`;
-        router.push(loginUrl);
+        router.push(`/login?next=${encodeURIComponent('/orders')}`);
         return;
       }
       // eslint-disable-next-line no-alert
@@ -156,88 +149,173 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="page">
-      <h1>Finalizar Encomenda</h1>
-      <p>
-        Reveja os detalhes da sua encomenda. Após confirmação irá receber um email com a fatura.
-        Após o pagamento, a sua encomenda será processada e enviada o mais breve possível.
-      </p>
+    <div className="space-y-10">
+      <header
+        data-reveal
+        className="translate-y-6 space-y-3 opacity-0"
+        style={{ transitionDelay: '0.05s' }}
+      >
+        <span className="inline-flex items-center rounded-full border border-amberglass/40 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-amberglass">
+          Finalizar encomenda
+        </span>
+        <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">Detalhes para faturação</h1>
+        <p className="max-w-3xl text-sm leading-relaxed text-bark-100/80 sm:text-base">
+          Confirme os dados de faturação e envie o pedido. Após recepção, a nossa equipa valida a disponibilidade, envia
+          a fatura e agenda a entrega ou recolha no showroom MasterFork.
+        </p>
+      </header>
 
       <Suspense fallback={null}>
         <CartPrefill setValue={setValue} setCartDetails={setCartDetails} />
       </Suspense>
 
       {success && (
-        <div className="success-message">
-          Encomenda finalizada com sucesso! Entraremos em contacto brevemente.
+        <div
+          className="rounded-3xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-200"
+          style={{ transitionDelay: '0.1s' }}
+        >
+          Encomenda finalizada com sucesso! Em breve receberá um email com os próximos passos.
         </div>
       )}
 
-      <form className="form" onSubmit={handleSubmit(onSubmit)}>
-        <div className="form__row">
-          <label>Nome</label>
-          <input {...register('name')} name="name" type="text" aria-invalid={!!errors.name} />
-          {errors.name && <span style={{ color: '#b3261e' }}>{errors.name.message}</span>}
-        </div>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <form
+          data-reveal
+          className="translate-y-6 space-y-6 rounded-3xl border border-bark-800/70 bg-bark-900/70 p-8 opacity-0 shadow-brand backdrop-blur-md"
+          onSubmit={handleSubmit(onSubmit)}
+          style={{ transitionDelay: '0.12s' }}
+        >
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="name" className="text-sm font-semibold text-bark-100">
+                Nome
+              </label>
+              <input
+                id="name"
+                {...register('name')}
+                type="text"
+                aria-invalid={!!errors.name}
+                className="rounded-2xl border border-bark-700/70 bg-bark-950/60 px-4 py-3 text-sm text-bark-100 outline-none transition focus:border-amberglass focus:ring-2 focus:ring-amberglass/40"
+              />
+              {errors.name && <span className="text-sm text-red-300">{errors.name.message}</span>}
+            </div>
 
-        <div className="form__row">
-          <label>Nome do estabelecimento (opcional)</label>
-          <input
-            {...register('business')}
-            name="business"
-            type="text"
-            aria-invalid={!!errors.business}
-          />
-          {errors.business && (
-            <span style={{ color: '#b3261e' }}>{errors.business.message}</span>
-          )}
-        </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="business" className="text-sm font-semibold text-bark-100">
+                Nome do estabelecimento (opcional)
+              </label>
+              <input
+                id="business"
+                {...register('business')}
+                type="text"
+                aria-invalid={!!errors.business}
+                className="rounded-2xl border border-bark-700/70 bg-bark-950/60 px-4 py-3 text-sm text-bark-100 outline-none transition focus:border-amberglass focus:ring-2 focus:ring-amberglass/40"
+              />
+              {errors.business && <span className="text-sm text-red-300">{errors.business.message}</span>}
+            </div>
 
-        <div className="form__row">
-          <label>Email de faturação</label>
-          <input {...register('email')} name="email" type="email" aria-invalid={!!errors.email} />
-          {errors.email && <span style={{ color: '#b3261e' }}>{errors.email.message}</span>}
-        </div>
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <label htmlFor="email" className="text-sm font-semibold text-bark-100">
+                Email de faturação
+              </label>
+              <input
+                id="email"
+                {...register('email')}
+                type="email"
+                aria-invalid={!!errors.email}
+                className="rounded-2xl border border-bark-700/70 bg-bark-950/60 px-4 py-3 text-sm text-bark-100 outline-none transition focus:border-amberglass focus:ring-2 focus:ring-amberglass/40"
+              />
+              {errors.email && <span className="text-sm text-red-300">{errors.email.message}</span>}
+            </div>
 
-        <div className="form__row">
-          <label>Resumo da encomenda</label>
-          {cartDetails.items.length > 0 ? (
-            <div className="cart-preview" role="list">
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <label htmlFor="message" className="text-sm font-semibold text-bark-100">
+                Observações / resumo da encomenda
+              </label>
+              <textarea
+                id="message"
+                {...register('message')}
+                rows={6}
+                className="rounded-2xl border border-bark-700/70 bg-bark-950/60 px-4 py-3 text-sm text-bark-100 outline-none transition focus:border-amberglass focus:ring-2 focus:ring-amberglass/40"
+              />
+              {errors.message && <span className="text-sm text-red-300">{errors.message.message}</span>}
+              <p className="text-xs text-bark-500">
+                Pode acrescentar indicações de entrega ou outra informação relevante. Limite de 2000 caracteres.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              className={`${pillBase} bg-amber-gradient text-bark-900 shadow-soft hover:shadow-brand disabled:cursor-not-allowed disabled:opacity-60`}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'A enviar...' : 'Confirmar Encomenda'}
+            </button>
+            {cartDetails.total > 0 && (
+              <span className="rounded-full border border-amberglass/40 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-amberglass">
+                Total estimado €{cartDetails.total.toFixed(2)}
+              </span>
+            )}
+          </div>
+        </form>
+
+        <aside
+          data-reveal
+          className="flex h-fit translate-y-6 flex-col gap-6 rounded-3xl border border-bark-800/70 bg-bark-900/70 p-8 opacity-0 shadow-brand backdrop-blur-md"
+          style={{ transitionDelay: '0.18s' }}
+        >
+          <div className="space-y-3">
+            <h2 className="text-2xl font-semibold text-white">Resumo da encomenda</h2>
+            <p className="text-sm text-bark-100/70">
+              Os detalhes do carrinho são enviados juntamente com o formulário para acelerar a faturação.
+            </p>
+          </div>
+
+          {cartDetails.items.length === 0 ? (
+            <div className="rounded-2xl border border-bark-800/70 bg-bark-950/60 px-4 py-6 text-sm text-bark-400">
+              O carrinho está vazio. Volte à loja e adicione produtos antes de finalizar a encomenda.
+            </div>
+          ) : (
+            <ul className="space-y-4">
               {cartDetails.items.map((item) => (
-                <div key={item.id} className="cart-preview__item" role="listitem">
-                  <div className="cart-preview__media">
+                <li key={item.id} className="flex gap-3 rounded-2xl border border-bark-800/70 bg-bark-950/60 p-4">
+                  {item.image ? (
                     <Image
                       src={item.image}
                       alt={item.name}
-                      width={72}
-                      height={72}
-                      className="cart-preview__image"
+                      width={64}
+                      height={64}
+                      className="h-16 w-16 rounded-xl object-cover"
                     />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-bark-900 text-amberglass">🍺</div>
+                  )}
+                  <div className="flex flex-1 flex-col gap-1 text-sm text-bark-100/80">
+                    <strong className="text-white">{item.name}</strong>
+                    <span className="text-xs text-bark-500">Qtd: {item.qty}</span>
+                    <span className="text-sm font-semibold text-amberglass">€{item.lineTotal.toFixed(2)}</span>
                   </div>
-                  <div className="cart-preview__details">
-                    <span className="cart-preview__name">{item.name}</span>
-                    <span className="cart-preview__meta">
-                      {item.qty} x €{item.price.toFixed(2)}
-                    </span>
-                  </div>
-                  <span className="cart-preview__line-total">€{item.lineTotal.toFixed(2)}</span>
-                </div>
+                </li>
               ))}
-              <div className="cart-preview__total">
-                Total: €{cartDetails.total.toFixed(2)}
-              </div>
-            </div>
-          ) : cartDetails.summaryText ? (
-            <pre className="cart-preview__fallback">{cartDetails.summaryText}</pre>
-          ) : (
-            <p className="cart-preview__empty">O carrinho está vazio.</p>
+            </ul>
           )}
-        </div>
 
-        <button type="submit" className="btn-primary" disabled={isSubmitting}>
-          Finalizar encomenda
-        </button>
-      </form>
+          <div className="rounded-2xl border border-bark-800/70 bg-bark-950/60 px-4 py-4 text-sm text-bark-100">
+            <div className="flex items-center justify-between">
+              <span>Total</span>
+              <strong className="text-lg text-amberglass">€{cartDetails.total.toFixed(2)}</strong>
+            </div>
+          </div>
+
+          {cartDetails.summaryText && (
+            <pre className="overflow-auto rounded-2xl border border-bark-800/70 bg-bark-950/60 px-4 py-3 text-xs text-bark-400">
+              {cartDetails.summaryText}
+            </pre>
+          )}
+        </aside>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ const http = require('node:http');
 const https = require('node:https');
 const { URL } = require('node:url');
 
-const SERVER_BASE_URL = process.env.SERVER_BASE_URL || 'http://localhost:3002';
+const getServerBaseUrl = () => process.env.SERVER_BASE_URL || 'http://localhost:3002';
 
 const isObject = (value) => value && typeof value === 'object';
 const sanitise = (value) => (typeof value === 'string' ? value.trim() : '');
@@ -14,7 +14,7 @@ const toNumber = (value) => {
 const upstreamRequest = (method, pathname, payload, authHeader) =>
   new Promise((resolve, reject) => {
     try {
-      const target = new URL(pathname, SERVER_BASE_URL);
+      const target = new URL(pathname, getServerBaseUrl());
       const isHttps = target.protocol === 'https:';
       const body = payload ? JSON.stringify(payload) : null;
       const headers = {
@@ -94,16 +94,37 @@ const validateOrderPayload = (data = {}) => {
   const payload = {};
 
   const name = sanitise(data.name);
-  if (!name) {
-    errors.push('Nome é obrigatório.');
+  const email = sanitise(data.email);
+  const missingName = !name;
+  const missingEmail = !email;
+
+  if (missingName && missingEmail) {
+    errors.push('Nome e email são obrigatórios.');
+    // eslint-disable-next-line no-console
+    console.warn('[ordersService] Payload inválido, faltam nome e email', data);
   } else {
+    if (missingName) {
+      errors.push('Nome é obrigatório.');
+      // eslint-disable-next-line no-console
+      console.warn('[ordersService] Nome ausente', data);
+    } else {
+      payload.name = name;
+    }
+
+    if (missingEmail) {
+      errors.push('Email é obrigatório.');
+      // eslint-disable-next-line no-console
+      console.warn('[ordersService] Email ausente', data);
+    } else {
+      payload.email = email;
+    }
+  }
+
+  if (!missingName) {
     payload.name = name;
   }
 
-  const email = sanitise(data.email);
-  if (!email) {
-    errors.push('Email é obrigatório.');
-  } else {
+  if (!missingEmail) {
     payload.email = email;
   }
 
@@ -112,6 +133,7 @@ const validateOrderPayload = (data = {}) => {
 
   const services = sanitise(data.services);
   if (services) payload.services = services;
+  if (!services) payload.services = 'Loja Online';
 
   const message = sanitise(data.message);
   if (message) payload.message = message;
@@ -137,4 +159,5 @@ module.exports = {
   listOrders,
   createOrder,
   validateOrderPayload,
+  callUpstream: upstreamRequest,
 };
