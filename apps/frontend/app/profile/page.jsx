@@ -10,10 +10,43 @@ import { useAuth } from '../../components/AuthProvider';
 const pillBase =
   'inline-flex items-center justify-center whitespace-nowrap rounded-full px-5 py-2 font-semibold tracking-wide transition duration-200';
 
+const normalisePhone = (value) => (typeof value === 'string' ? value.replace(/[^\d+]/g, '') : '');
+const isValidPhone = (value) => {
+  const digits = normalisePhone(value).replace(/\D/g, '');
+  return digits.length >= 9 && digits.length <= 15;
+};
+
 const parseCurrency = (value) => {
   if (typeof value === 'number') return value;
   if (typeof value !== 'string') return null;
-  const cleaned = value.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
+
+  const normalized = value.replace(/[^\d,.-]/g, '');
+  if (!normalized) return null;
+
+  const lastComma = normalized.lastIndexOf(',');
+  const lastDot = normalized.lastIndexOf('.');
+  const hasComma = lastComma !== -1;
+  const hasDot = lastDot !== -1;
+
+  let cleaned = normalized;
+
+  if (hasComma && hasDot) {
+    if (lastComma > lastDot) {
+      cleaned = normalized.replace(/\./g, '').replace(',', '.');
+    } else {
+      cleaned = normalized.replace(/,/g, '');
+    }
+  } else if (hasComma) {
+    cleaned = normalized.replace(/\./g, '').replace(',', '.');
+  } else if (hasDot) {
+    const decimalDigits = normalized.length - lastDot - 1;
+    if (decimalDigits === 3 && lastDot > 0) {
+      cleaned = normalized.replace(/\./g, '');
+    } else {
+      cleaned = normalized.replace(/,/g, '');
+    }
+  }
+
   const parsed = Number.parseFloat(cleaned);
   return Number.isFinite(parsed) ? parsed : null;
 };
@@ -147,7 +180,7 @@ export default function ProfilePage() {
   const [ordersError, setOrdersError] = useState('');
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [activeTab, setActiveTab] = useState('orders');
-  const [accountForm, setAccountForm] = useState({ name: '', email: '' });
+  const [accountForm, setAccountForm] = useState({ name: '', email: '', phone: '' });
   const [savingAccount, setSavingAccount] = useState(false);
   const [accountMessage, setAccountMessage] = useState('');
   const [accountError, setAccountError] = useState('');
@@ -204,6 +237,7 @@ export default function ProfilePage() {
       setAccountForm({
         name: user.name || '',
         email: user.email || '',
+        phone: user.phone || '',
       });
     }
   }, [user]);
@@ -245,6 +279,16 @@ export default function ProfilePage() {
         setAccountError('Introduza um email válido.');
         return;
       }
+      const phoneRaw = accountForm.phone.trim();
+      if (!phoneRaw) {
+        setAccountError('O número de telemóvel é obrigatório.');
+        return;
+      }
+      if (!isValidPhone(phoneRaw)) {
+        setAccountError('Introduza um número de telemóvel válido.');
+        return;
+      }
+      payload.phone = normalisePhone(phoneRaw);
       const response = await AuthAPI.updateProfile(payload);
       const { user: updatedUser, token } = response.data || {};
       if (!updatedUser) {
@@ -341,7 +385,7 @@ export default function ProfilePage() {
           style={{ transitionDelay: '0.15s' }}
         >
           <h2 className="text-2xl font-semibold text-white">Dados da conta</h2>
-          <form className="grid gap-6 md:grid-cols-2" onSubmit={handleAccountSubmit}>
+          <form className="grid gap-6" onSubmit={handleAccountSubmit}>
             <div className="flex flex-col gap-2">
               <label htmlFor="account-name" className="text-sm font-semibold text-bark-100">
                 Nome
@@ -368,6 +412,21 @@ export default function ProfilePage() {
                 value={accountForm.email}
                 onChange={handleAccountChange}
                 placeholder="nome@masterfork.pt"
+                className="rounded-2xl border border-bark-700/70 bg-bark-950/60 px-4 py-3 text-sm text-bark-100 outline-none transition focus:border-amberglass focus:ring-2 focus:ring-amberglass/40"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="account-phone" className="text-sm font-semibold text-bark-100">
+                Telemóvel
+              </label>
+              <input
+                id="account-phone"
+                name="phone"
+                type="tel"
+                value={accountForm.phone}
+                onChange={handleAccountChange}
+                placeholder="912 345 678"
                 className="rounded-2xl border border-bark-700/70 bg-bark-950/60 px-4 py-3 text-sm text-bark-100 outline-none transition focus:border-amberglass focus:ring-2 focus:ring-amberglass/40"
               />
             </div>

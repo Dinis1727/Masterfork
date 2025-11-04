@@ -21,10 +21,9 @@ const schema = z.object({
   message: z.string().max(2000).optional(),
 });
 
-function CartPrefill({ setValue, setCartDetails }) {
+function CartPrefill({ setCartDetails }) {
   const searchParams = useSearchParams();
   React.useEffect(() => {
-    const cartText = searchParams?.get('cart') || '';
     const cartItemsParam = searchParams?.get('items');
 
     let parsedItems = [];
@@ -59,28 +58,13 @@ function CartPrefill({ setValue, setCartDetails }) {
 
     const total = parsedItems.reduce((acc, item) => acc + item.lineTotal, 0);
 
-    const detailLines = parsedItems.length
-      ? [
-          ...parsedItems.map((item) => `${item.name} x${item.qty} = €${item.lineTotal.toFixed(2)}`),
-          `Total: €${total.toFixed(2)}`,
-        ]
-      : cartText
-          .split('|')
-          .map((segment) => segment.trim())
-          .filter(Boolean);
-
-    const summaryText = detailLines.length ? `Resumo da encomenda:\n${detailLines.join('\n')}` : '';
-
-    setValue('message', summaryText, { shouldDirty: false });
-
     if (setCartDetails) {
       setCartDetails({
         items: parsedItems,
         total,
-        summaryText,
       });
     }
-  }, [searchParams, setValue, setCartDetails]);
+  }, [searchParams, setCartDetails]);
   return null;
 }
 
@@ -90,15 +74,16 @@ export default function OrdersPage() {
   const [cartDetails, setCartDetails] = React.useState({
     items: [],
     total: 0,
-    summaryText: '',
   });
+  const [countdown, setCountdown] = React.useState(null);
+  const [lastSubmission, setLastSubmission] = React.useState(null);
+  const successMessageRef = React.useRef(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-    setValue,
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -110,6 +95,9 @@ export default function OrdersPage() {
   });
 
   const onSubmit = async (data) => {
+    setSuccess(false);
+    setCountdown(null);
+    setLastSubmission(null);
     try {
       const name = typeof data.name === 'string' ? data.name.trim() : '';
       const email = typeof data.email === 'string' ? data.email.trim() : '';
@@ -119,7 +107,6 @@ export default function OrdersPage() {
       const payload = { name, email };
       if (business) payload.business = business;
       if (message) payload.message = message;
-      if (cartDetails.summaryText) payload.cartSummary = cartDetails.summaryText;
       if (Array.isArray(cartDetails.items) && cartDetails.items.length > 0) payload.items = cartDetails.items;
       if (cartDetails.total > 0) payload.total = cartDetails.total;
 
@@ -132,10 +119,21 @@ export default function OrdersPage() {
       if (!ok) throw new Error('Resposta inválida do servidor');
 
       setSuccess(true);
-      reset();
-      if (cartDetails.summaryText) {
-        setValue('message', cartDetails.summaryText, { shouldDirty: false });
-      }
+      setCountdown(5);
+      setLastSubmission({
+        name,
+        business: business || '',
+        email,
+        message,
+        items: cartDetails.items,
+        total: cartDetails.total,
+      });
+      reset({
+        name,
+        business: business || '',
+        email,
+        message,
+      });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Falha ao enviar encomenda:', error);
@@ -147,6 +145,40 @@ export default function OrdersPage() {
       alert('Ocorreu um erro. Tente novamente.');
     }
   };
+
+  React.useEffect(() => {
+    if (countdown === null) return undefined;
+    if (countdown === 0) {
+      router.push('/');
+      return undefined;
+    }
+    const timeout = setTimeout(() => {
+      setCountdown((prev) => {
+        if (prev === null) return prev;
+        if (prev <= 1) return 0;
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [countdown, router]);
+
+  const countdownLabel = React.useMemo(() => {
+    if (countdown === null) return '';
+    const safe = Math.max(0, Math.min(5, countdown));
+    if (safe === 0) return '';
+    return ` A redirecionar em ${safe}s`;
+  }, [countdown]);
+
+  React.useEffect(() => {
+    if (!success) return;
+    if (typeof window === 'undefined') return;
+    if (window.innerWidth >= 768) return;
+    const el = successMessageRef.current;
+    if (!el || typeof el.scrollIntoView !== 'function') return;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }, [success]);
 
   return (
     <div className="space-y-10">
@@ -166,15 +198,67 @@ export default function OrdersPage() {
       </header>
 
       <Suspense fallback={null}>
-        <CartPrefill setValue={setValue} setCartDetails={setCartDetails} />
+        <CartPrefill setCartDetails={setCartDetails} />
       </Suspense>
 
       {success && (
         <div
+          ref={successMessageRef}
           className="rounded-3xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-200"
           style={{ transitionDelay: '0.1s' }}
         >
           Encomenda finalizada com sucesso! Em breve receberá um email com os próximos passos.
+          {countdownLabel}
+        </div>
+      )}
+
+      {success && lastSubmission && (
+        <div
+          className="space-y-4 rounded-3xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-sm text-bark-100"
+          style={{ transitionDelay: '0.11s' }}
+        >
+          <h3 className="text-base font-semibold text-emerald-200">Dados enviados</h3>
+          <dl className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-emerald-500/20 bg-bark-950/60 p-3">
+              <dt className="text-xs uppercase tracking-widest text-emerald-300/70">Nome</dt>
+              <dd className="text-sm text-emerald-100">{lastSubmission.name || '—'}</dd>
+            </div>
+            <div className="rounded-2xl border border-emerald-500/20 bg-bark-950/60 p-3">
+              <dt className="text-xs uppercase tracking-widest text-emerald-300/70">Estabelecimento</dt>
+              <dd className="text-sm text-emerald-100">{lastSubmission.business || '—'}</dd>
+            </div>
+            <div className="rounded-2xl border border-emerald-500/20 bg-bark-950/60 p-3">
+              <dt className="text-xs uppercase tracking-widest text-emerald-300/70">Email</dt>
+              <dd className="text-sm text-emerald-100 break-words">{lastSubmission.email || '—'}</dd>
+            </div>
+            <div className="rounded-2xl border border-emerald-500/20 bg-bark-950/60 p-3">
+              <dt className="text-xs uppercase tracking-widest text-emerald-300/70">Observações</dt>
+              <dd className="text-sm text-emerald-100 whitespace-pre-wrap">
+                {lastSubmission.message || '—'}
+              </dd>
+            </div>
+          </dl>
+          {Array.isArray(lastSubmission.items) && lastSubmission.items.length > 0 ? (
+            <div className="rounded-2xl border border-emerald-500/20 bg-bark-950/60 p-4">
+              <h4 className="text-sm font-semibold text-emerald-200">Resumo enviado</h4>
+              <ul className="mt-2 space-y-2 text-sm text-emerald-100/90">
+                {lastSubmission.items.map((item) => (
+                  <li key={item.id} className="flex justify-between gap-4">
+                    <span>
+                      {item.name} × {item.qty}
+                    </span>
+                    <span>€{item.lineTotal?.toFixed(2)}</span>
+                  </li>
+                ))}
+              </ul>
+              {Number.isFinite(lastSubmission.total) ? (
+                <div className="mt-3 flex justify-between border-t border-emerald-500/20 pt-2 text-sm font-semibold text-emerald-200">
+                  <span>Total</span>
+                  <span>€{lastSubmission.total.toFixed(2)}</span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -230,7 +314,7 @@ export default function OrdersPage() {
 
             <div className="flex flex-col gap-2 md:col-span-2">
               <label htmlFor="message" className="text-sm font-semibold text-bark-100">
-                Observações / resumo da encomenda
+                Observações (opcional)
               </label>
               <textarea
                 id="message"
@@ -309,11 +393,6 @@ export default function OrdersPage() {
             </div>
           </div>
 
-          {cartDetails.summaryText && (
-            <pre className="overflow-auto rounded-2xl border border-bark-800/70 bg-bark-950/60 px-4 py-3 text-xs text-bark-400">
-              {cartDetails.summaryText}
-            </pre>
-          )}
         </aside>
       </div>
     </div>

@@ -65,7 +65,7 @@ export default function Footer() {
                   <Link href="/contacts" className="hover:text-amberglass">Contactos</Link>
                 </li>
                 <li>
-                  <Link href="/orders" className="hover:text-amberglass">Pedidos &amp; Encomendas</Link>
+                  <Link href="/shop" className="hover:text-amberglass">Pedidos &amp; Encomendas</Link>
                 </li>
               </ul>
             </div>

@@ -61,6 +61,7 @@ exports.generateAccessToken = (user) =>
       id: user.id,
       email: user.email,
       name: user.name,
+      phone: user.phone || '',
     },
     ACCESS_TOKEN_SECONDS,
   );

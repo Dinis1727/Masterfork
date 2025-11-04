@@ -12,6 +12,12 @@ import { useAuth } from '../../components/AuthProvider';
 const pillBase =
   'inline-flex items-center justify-center whitespace-nowrap rounded-full px-5 py-2 font-semibold tracking-wide transition duration-200';
 
+const normalisePhone = (value) => (typeof value === 'string' ? value.replace(/[^\d+]/g, '') : '');
+const isValidPhone = (value) => {
+  const digits = normalisePhone(value).replace(/\D/g, '');
+  return digits.length >= 9 && digits.length <= 15;
+};
+
 const registerSchema = z
   .object({
     name: z
@@ -21,6 +27,10 @@ const registerSchema = z
     email: z
       .string({ required_error: 'Indique o seu email.' })
       .email('Introduza um email válido.'),
+    phone: z
+      .string({ required_error: 'Indique o número de telemóvel.' })
+      .trim()
+      .refine((value) => isValidPhone(value), 'Introduza um número de telemóvel válido.'),
     password: z
       .string({ required_error: 'Escolha uma palavra-passe.' })
       .min(6, 'A palavra-passe deve ter pelo menos 6 caracteres.'),
@@ -61,6 +71,7 @@ function RegisterContent() {
     defaultValues: {
       name: '',
       email: '',
+      phone: '',
       password: '',
       confirmPassword: '',
       remember: true,
@@ -73,6 +84,7 @@ function RegisterContent() {
       const response = await AuthAPI.register({
         name: values.name,
         email: values.email,
+        phone: normalisePhone(values.phone),
         password: values.password,
       });
 
@@ -144,6 +156,19 @@ function RegisterContent() {
             className="rounded-2xl border border-bark-700/70 bg-bark-950/60 px-4 py-3 text-sm text-bark-100 outline-none transition focus:border-amberglass focus:ring-2 focus:ring-amberglass/40"
           />
           {errors.email && <span className="text-sm text-red-300">{errors.email.message}</span>}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="phone" className="text-sm font-semibold text-bark-100">Telemóvel</label>
+          <input
+            id="phone"
+            type="tel"
+            placeholder="912 345 678"
+            {...register('phone')}
+            aria-invalid={!!errors.phone}
+            className="rounded-2xl border border-bark-700/70 bg-bark-950/60 px-4 py-3 text-sm text-bark-100 outline-none transition focus:border-amberglass focus:ring-2 focus:ring-amberglass/40"
+          />
+          {errors.phone && <span className="text-sm text-red-300">{errors.phone.message}</span>}
         </div>
 
         <div className="flex flex-col gap-2">

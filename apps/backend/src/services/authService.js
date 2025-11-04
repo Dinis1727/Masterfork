@@ -51,6 +51,14 @@ const nextUserId = () => {
 
 const normaliseEmail = (email) => String(email || '').trim().toLowerCase();
 const normaliseName = (name) => String(name || '').trim();
+const normalisePhone = (phone) => {
+  if (phone === undefined || phone === null) return '';
+  const raw = String(phone).trim();
+  if (!raw) return '';
+  const digits = raw.replace(/[^\d]/g, '');
+  if (!digits) return '';
+  return raw.startsWith('+') ? `+${digits}` : digits;
+};
 
 const hashPassword = (password) => {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -68,15 +76,21 @@ const verifyPassword = (password, stored) => {
   return crypto.timingSafeEqual(derivedBuffer, hashBuffer);
 };
 
-exports.register = async ({ name, email, password }) => {
+exports.register = async ({ name, email, password, phone }) => {
   const cleanedName = normaliseName(name);
   const cleanedEmail = normaliseEmail(email);
   const cleanedPassword = String(password || '').trim();
+  const cleanedPhone = normalisePhone(phone);
 
-  if (!cleanedName || !cleanedEmail || !cleanedPassword) {
+  if (!cleanedName || !cleanedEmail || !cleanedPassword || !cleanedPhone) {
     // eslint-disable-next-line no-console
-    console.warn('[authService] Registo inválido', { cleanedName, cleanedEmail, hasPassword: !!cleanedPassword });
-    throw new Error('Nome, email e palavra-passe são obrigatórios.');
+    console.warn('[authService] Registo inválido', {
+      cleanedName,
+      cleanedEmail,
+      hasPassword: !!cleanedPassword,
+      hasPhone: !!cleanedPhone,
+    });
+    throw new Error('Nome, email, telemóvel e palavra-passe são obrigatórios.');
   }
 
   if (cleanedPassword.length < 6) {
@@ -95,6 +109,7 @@ exports.register = async ({ name, email, password }) => {
     id: nextUserId(),
     name: cleanedName,
     email: cleanedEmail,
+    phone: cleanedPhone,
     password: hashedPassword,
   };
 
@@ -105,6 +120,7 @@ exports.register = async ({ name, email, password }) => {
     id: newUser.id,
     name: newUser.name,
     email: newUser.email,
+    phone: newUser.phone,
   };
   const token = jwtUtils.generateAccessToken(publicUser);
 
@@ -128,13 +144,13 @@ exports.login = async ({ email, password }) => {
   const passwordValid = verifyPassword(cleanedPassword, user.password);
   if (!passwordValid) throw new Error('Credenciais inválidas.');
 
-  const publicUser = { id: user.id, name: user.name, email: user.email };
+  const publicUser = { id: user.id, name: user.name, email: user.email, phone: user.phone || '' };
   const token = jwtUtils.generateAccessToken(publicUser);
 
   return { token, user: publicUser };
 };
 
-exports.update = async (id, { name, email }) => {
+exports.update = async (id, { name, email, phone }) => {
   const userId = Number(id);
   if (!Number.isFinite(userId)) {
     throw new Error('Identificador de utilizador inválido.');
@@ -147,12 +163,17 @@ exports.update = async (id, { name, email }) => {
 
   const nextName = name !== undefined ? normaliseName(name) : target.name;
   const nextEmail = email !== undefined ? normaliseEmail(email) : target.email;
+  const nextPhone =
+    phone !== undefined ? normalisePhone(phone) : normalisePhone(target.phone);
 
   if (!nextName) {
     throw new Error('O nome é obrigatório.');
   }
   if (!nextEmail) {
     throw new Error('O email é obrigatório.');
+  }
+  if (!nextPhone) {
+    throw new Error('O telemóvel é obrigatório.');
   }
 
   const emailExists =
@@ -163,10 +184,16 @@ exports.update = async (id, { name, email }) => {
 
   target.name = nextName;
   target.email = nextEmail;
+  target.phone = nextPhone;
 
   saveUsers(users);
 
-  const publicUser = { id: target.id, name: target.name, email: target.email };
+  const publicUser = {
+    id: target.id,
+    name: target.name,
+    email: target.email,
+    phone: target.phone || '',
+  };
   const token = jwtUtils.generateAccessToken(publicUser);
 
   return { user: publicUser, token };
@@ -185,6 +212,7 @@ exports.verify = async (token) => {
     id: target.id,
     email: target.email,
     name: target.name,
+    phone: target.phone || '',
   };
 };
 

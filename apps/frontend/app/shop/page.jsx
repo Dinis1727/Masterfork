@@ -124,10 +124,6 @@ export default function ShopPage() {
 
   const total = cartItems.reduce((acc, it) => acc + it.lineTotal, 0);
 
-  const summary = cartItems.length
-    ? `${cartItems.map((it) => `${it.name} x${it.qty} = €${it.lineTotal.toFixed(2)}`).join(' | ')} | Total: €${total.toFixed(2)}`
-    : '';
-
   const cartDataParam = cartItems.length
     ? encodeURIComponent(
         JSON.stringify(
@@ -143,10 +139,9 @@ export default function ShopPage() {
       )
     : '';
 
-  const ordersLink =
-    cartItems.length && summary
-      ? `/orders?cart=${encodeURIComponent(summary)}&items=${cartDataParam}`
-      : '/orders';
+  const ordersLink = cartItems.length
+    ? `/orders?items=${cartDataParam}`
+    : '/orders';
 
   const filtered = products.filter((p) => {
     const q = query.trim().toLowerCase();
@@ -286,9 +281,24 @@ export default function ShopPage() {
                   className="flex flex-col gap-3 rounded-2xl border border-bark-800/70 bg-bark-950/60 px-4 py-3 text-sm text-bark-100/80"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <strong className="text-white">{it.name}</strong>
-                      <div className="text-xs text-bark-400">€{it.price.toFixed(2)} unidade</div>
+                    <div className="flex gap-3">
+                      <div className="h-14 w-14 overflow-hidden rounded-xl border border-bark-800/70 bg-bark-900/60">
+                        {it.image ? (
+                          <Image
+                            src={it.image}
+                            alt={it.name}
+                            width={56}
+                            height={56}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-lg">🍺</div>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <strong className="text-white">{it.name}</strong>
+                        <div className="text-xs text-bark-400">€{it.price.toFixed(2)} unidade</div>
+                      </div>
                     </div>
                     <span className="text-sm font-semibold text-amberglass">€{it.lineTotal.toFixed(2)}</span>
                   </div>
@@ -337,11 +347,6 @@ export default function ShopPage() {
               <Link href={ordersLink} className={`${pillBase} bg-amber-gradient text-bark-900 shadow-soft hover:shadow-brand`}>
                 Finalizar encomenda
               </Link>
-            )}
-            {summary && (
-              <p className="rounded-2xl border border-bark-800/70 bg-bark-950/60 px-4 py-3 text-xs text-bark-400">
-                {summary}
-              </p>
             )}
           </div>
         </aside>
