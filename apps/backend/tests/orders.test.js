@@ -72,7 +72,12 @@ test.beforeEach(async () => {
 
     await request(server)
       .post('/auth/register')
-      .send({ name: 'Test User', email: testUserEmail, password: 'secret123' })
+      .send({
+        name: 'Test User',
+        email: testUserEmail,
+        password: 'secret123',
+        phone: '+351000000000',
+      })
       .expect(201);
     const login = await request(server)
       .post('/auth/login')
