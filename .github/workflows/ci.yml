@@ -114,6 +114,7 @@ jobs:
     env:
       # Keep Prisma CLI happy without needing a DB in CI
       DATABASE_URL: postgresql://user:password@localhost:5432/postgres
+      SHADOW_DATABASE_URL: postgresql://user:password@localhost:5432/postgres-shadow
     steps:
       - name: Checkout
         uses: actions/checkout@v4
