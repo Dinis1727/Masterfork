@@ -229,11 +229,11 @@ export default function OrdersPage() {
             </div>
             <div className="rounded-2xl border border-emerald-500/20 bg-bark-950/60 p-3">
               <dt className="text-xs uppercase tracking-widest text-emerald-300/70">Email</dt>
-              <dd className="text-sm text-emerald-100 break-words">{lastSubmission.email || '—'}</dd>
+              <dd className="break-words text-sm text-emerald-100">{lastSubmission.email || '—'}</dd>
             </div>
             <div className="rounded-2xl border border-emerald-500/20 bg-bark-950/60 p-3">
               <dt className="text-xs uppercase tracking-widest text-emerald-300/70">Observações</dt>
-              <dd className="text-sm text-emerald-100 whitespace-pre-wrap">
+              <dd className="whitespace-pre-wrap text-sm text-emerald-100">
                 {lastSubmission.message || '—'}
               </dd>
             </div>
